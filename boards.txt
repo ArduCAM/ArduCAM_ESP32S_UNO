@@ -1,0 +1,45 @@
+menu.UploadSpeed=Upload Speed
+menu.FlashFreq=Flash Frequency
+menu.DebugLevel=Core Debug Level
+
+##############################################################
+
+ArduCAM_ESP32S_UNO.name=ArduCAM ESP32S UNO
+
+ArduCAM_ESP32S_UNO.upload.tool=esptool
+ArduCAM_ESP32S_UNO.upload.maximum_size=1044464
+ArduCAM_ESP32S_UNO.upload.maximum_data_size=294912
+ArduCAM_ESP32S_UNO.upload.wait_for_upload_port=true
+
+ArduCAM_ESP32S_UNO.serial.disableDTR=True  
+ArduCAM_ESP32S_UNO.serial.disableRTS=True
+
+ArduCAM_ESP32S_UNO.build.mcu=esp32
+ArduCAM_ESP32S_UNO.build.core=esp32
+ArduCAM_ESP32S_UNO.build.variant=ArduCAM_ESP32S_UNO
+ArduCAM_ESP32S_UNO.build.board=ArduCAM_ESP32S_UNO
+
+ArduCAM_ESP32S_UNO.build.f_cpu=240000000L
+ArduCAM_ESP32S_UNO.build.flash_mode=dio
+ArduCAM_ESP32S_UNO.build.flash_size=4MB
+
+ArduCAM_ESP32S_UNO.menu.FlashFreq.80=80MHz
+ArduCAM_ESP32S_UNO.menu.FlashFreq.80.build.flash_freq=80m
+ArduCAM_ESP32S_UNO.menu.FlashFreq.40=40MHz
+ArduCAM_ESP32S_UNO.menu.FlashFreq.40.build.flash_freq=40m
+
+ArduCAM_ESP32S_UNO.menu.UploadSpeed.921600=921600
+ArduCAM_ESP32S_UNO.menu.UploadSpeed.921600.upload.speed=921600
+ArduCAM_ESP32S_UNO.menu.UploadSpeed.115200=115200
+ArduCAM_ESP32S_UNO.menu.UploadSpeed.115200.upload.speed=115200
+ArduCAM_ESP32S_UNO.menu.UploadSpeed.256000.windows=256000
+ArduCAM_ESP32S_UNO.menu.UploadSpeed.256000.upload.speed=256000
+ArduCAM_ESP32S_UNO.menu.UploadSpeed.230400.windows.upload.speed=256000
+ArduCAM_ESP32S_UNO.menu.UploadSpeed.230400=230400
+ArduCAM_ESP32S_UNO.menu.UploadSpeed.230400.upload.speed=230400
+ArduCAM_ESP32S_UNO.menu.UploadSpeed.460800.linux=460800
+ArduCAM_ESP32S_UNO.menu.UploadSpeed.460800.macosx=460800
+ArduCAM_ESP32S_UNO.menu.UploadSpeed.460800.upload.speed=460800
+ArduCAM_ESP32S_UNO.menu.UploadSpeed.512000.windows=512000
+ArduCAM_ESP32S_UNO.menu.UploadSpeed.512000.upload.speed=512000
+
