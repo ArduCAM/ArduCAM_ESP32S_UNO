@@ -44,7 +44,7 @@ def compile(tmp_dir, sketch, tools_dir, hardware_dir, ide_path, f, args):
     else:
         cmd += '-hardware "' + hardware_dir + '" '
     # Debug=Serial,DebugLevel=Core____
-    cmd += '-fqbn=ArduCAM:ArduCAM_ESP32S_UNO:{board_name}:' \
+    cmd += '-fqbn=espressif:ArduCAM_ESP32S_UNO:{board_name}:' \
             'FlashFreq={flash_freq},' \
             'UploadSpeed=921600'.format(**vars(args))
     cmd += ' '

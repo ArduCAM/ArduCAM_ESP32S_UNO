@@ -89,6 +89,8 @@
 	2016/09/29	V3.5.2	by Lee	Optimize the OV5642 register settings		
 	2016/10/05	V4.0.0	by Lee	Add support for second generation of ArduCAM shield V2, ArduCAM-Mini-5MP-Plus(OV5642/OV5640).				
   2016/10/28  V4.0.1  by Lee	Add support for Raspberry Pi
+ 2017/07/07  V4.1.0  by Lee	Add support for ArduCAM_ESP32 paltform
+  2017/07/25  V4.1.1  by Lee	Add support for MT9V034
 --------------------------------------*/
 
 #ifndef ArduCAM_H
@@ -232,6 +234,7 @@
 #define MT9V111		14
 #define MT9T112		15
 #define MT9D112		16
+#define MT9V034 	17
 
 #define OV2640_160x120 		0	//160x120
 #define OV2640_176x144 		1	//176x144

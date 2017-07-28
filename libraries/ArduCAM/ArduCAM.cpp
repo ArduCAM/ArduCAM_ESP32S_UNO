@@ -90,6 +90,7 @@
 	2016/10/05	V4.0.0	by Lee	Add support for second generation hardware platforms like ArduCAM shield V2, ArduCAM-Mini-5MP-Plus(OV5642/OV5640).	  
   2016/10/28  V4.0.1  by Lee	Add support for Raspberry Pi
   2017/07/07  V4.1.0  by Lee	Add support for ArduCAM_ESP32 paltform
+  2017/07/25  V4.1.1  by Lee	Add support for MT9V034
   --------------------------------------*/
 #include "memorysaver.h"
 #if defined ( RASPBERRY_PI )
@@ -169,6 +170,9 @@ ArduCAM::ArduCAM(byte model ,int CS)
     break;
     case MT9M001:
       sensor_addr = 0xba;
+    break;
+    case MT9V034:
+      sensor_addr = 0x90;
     break;
     case OV3640:
     case OV5640:
