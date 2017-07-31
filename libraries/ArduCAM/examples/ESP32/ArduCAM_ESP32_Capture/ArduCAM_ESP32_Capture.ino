@@ -56,7 +56,7 @@ const char *AP_password = NULL;
 const char *ssid = "SSID"; // Put your SSID here
 const char *password = "PASSWORD"; // Put your PASSWORD here
 
-static const size_t bufferSize = 1024;
+static const size_t bufferSize = 2048;
 static uint8_t buffer[bufferSize] = {0xFF};
 uint8_t temp = 0, temp_last = 0;
 int i = 0;
