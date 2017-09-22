@@ -1,0 +1,289 @@
+;*****************************************************************************
+;
+; Name:  slabvxd.inf 
+;
+; Function:
+;	Install the CP210x USB to UART Bridge Controller (VCOMM)
+;
+; Copyright (c) 1997-2004 MCCI
+;
+; MCCI is a registered trademark of Moore Computer Consultants, Inc
+;
+; NOTICE: This software is licensed, not sold.  Any modification of this
+; inf file to change the reference to an operating system or to change the
+; reference to a device is not permitted unless authorized in writing by
+; Moore Computer Consultants, Inc..
+;
+;*****************************************************************************
+
+[Version]
+signature="$CHICAGO$"
+Class=Ports
+ClassGuid={4D36E978-E325-11CE-BFC1-08002BE10318}
+Provider=%Provider%
+DriverVer=03/07/2006, 4.38.4.127
+CatalogFile=slabser.cat
+
+;-----------------------------------------------------------------------------
+; No files are copied by this file.. no filecopy init declarations are here.
+;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+; Table of Contents
+;-----------------------------------------------------------------------------
+[Manufacturer]
+%SLAB%=SLAB
+
+;-----------------------------------------------------------------------------
+; Device-by-device entries
+;-----------------------------------------------------------------------------
+[SLAB]
+%PortDesc% = SLAB.Install, SLABCR\{E4768D57-352E-4495-880C-056A7CB34611}
+
+;-----------------------------------------------------------------------------
+; The exclude-from-select stuff
+;-----------------------------------------------------------------------------
+[ControlFlags]
+ExcludeFromSelect = *
+
+;-----------------------------------------------------------------------------
+; Installation instructions
+;-----------------------------------------------------------------------------
+[SLAB.Install]
+AddReg		= SLAB.W95AddReg,SLAB.W95Overrides
+
+[SLAB.Install.Nt]
+
+;-----------------------------------------------------------------------------
+;  Registry
+;-----------------------------------------------------------------------------
+;**** here's the stuff for W95 ports.
+;**** it's in this INF file, but we'll not use it until we get enumerated.
+[SLAB.W95AddReg]
+HKR,,DevLoader,,*vcomm
+HKR,,PortDriver,,slabcomm.vxd
+HKR,,Contention,,slabvcd.vxd
+HKR,,DCB,3,1C,00,00,00, 00,C2,01,00, 11,33,00,00, 00,00, 0a,00, 0a,00, 08, 00, 00, 11, 13, 00, 00, 00
+HKR,,PortSubClass,1,01
+HKR,,ConfigDialog,,serialui.dll
+HKR,,EnumPropPages,,"serialui.dll,EnumPropPages"
+
+;-----------------------------------------------------------------------------
+;  Logical Configurations
+;-----------------------------------------------------------------------------
+[SLAB.W95Overrides]
+;-- Config for 3f8 - COM1,IRQ4
+HKR,Override,0000,1, \
+00,04,00,00,00,00,00,00, \
+;*** I/O Range 0 ***
+20,00,00,00, \  ; total length of io resource descriptor
+02,00,00,00, \  ; ResType_IO = 0x00000002
+01,00,0C,00, \  ; IOD_count / IOD_Type = 0x0c
+00,00,00,00, \  ; IOD_Alloc_Base / IOD_Alloc_End
+00,00,00,00, \  ; IOD_DesFlags / IOD_Alloc_Alias / IOD_Alloc_Decode
+F8,FF,08,00, \  ; IOR_Align / IOR_nPorts
+F8,03,FF,03, \  ; IOR_Min / IOR_Max
+00,00,00,00, \  ; IOR_RangeFlags / IOR_Alias / IOR_Decode
+;*** IRQ ***
+10,00,00,00, \  ; total length of irq resource descriptor
+04,00,00,00, \  ; ResType_IRQ - 0x00000004
+01,00,00,00, \  ; IRQD_Flags / IRQD_Alloc_Num
+10,00,00,00, \  ; IRQD_Req_Mask / IRQD_Reserved
+;*** TERMINATOR ***
+00,00,00,00
+;
+;--- Config for 2f8 0 COM2 IRQ3
+HKR,Override,0001,1, \
+00,04,00,00,00,00,00,00, \
+;*** I/O Range 0 ***
+20,00,00,00, \  ; total length of io resource descriptor
+02,00,00,00, \  ; ResType_IO = 0x00000002
+01,00,0C,00, \  ; IOD_count / IOD_Type = 0x0c
+00,00,00,00, \  ; IOD_Alloc_Base / IOD_Alloc_End
+00,00,00,00, \  ; IOD_DesFlags / IOD_Alloc_Alias / IOD_Alloc_Decode
+F8,FF,08,00, \  ; IOR_Align / IOR_nPorts
+F8,02,FF,02, \  ; IOR_Min / IOR_Max
+00,00,00,00, \  ; IOR_RangeFlags / IOR_Alias / IOR_Decode
+;*** IRQ ***
+10,00,00,00, \  ; total length of irq resource descriptor
+04,00,00,00, \  ; ResType_IRQ - 0x00000004
+01,00,00,00, \  ; IRQD_Flags / IRQD_Alloc_Num
+08,00,00,00, \  ; IRQD_Req_Mask / IRQD_Reserved
+;*** TERMINATOR ***
+00,00,00,00
+;
+;--- Config for 3e8 0 COM3 IRQ4
+HKR,Override,0002,1, \
+00,04,00,00,00,00,00,00, \
+;*** I/O Range 0 ***
+20,00,00,00, \  ; total length of io resource descriptor
+02,00,00,00, \  ; ResType_IO = 0x00000002
+01,00,0C,00, \  ; IOD_count / IOD_Type = 0x0c
+00,00,00,00, \  ; IOD_Alloc_Base / IOD_Alloc_End
+00,00,00,00, \  ; IOD_DesFlags / IOD_Alloc_Alias / IOD_Alloc_Decode
+F8,FF,08,00, \  ; IOR_Align / IOR_nPorts
+E8,03,EF,03, \  ; IOR_Min / IOR_Max
+00,00,00,00, \  ; IOR_RangeFlags / IOR_Alias / IOR_Decode
+;*** IRQ ***
+10,00,00,00, \  ; total length of irq resource descriptor
+04,00,00,00, \  ; ResType_IRQ - 0x00000004
+01,00,00,00, \  ; IRQD_Flags / IRQD_Alloc_Num
+10,00,00,00, \  ; IRQD_Req_Mask / IRQD_Reserved
+;*** TERMINATOR ***
+00,00,00,00
+;
+;--- Config for 2e8 0 COM4 IRQ3
+HKR,Override,0003,1, \
+00,04,00,00,00,00,00,00, \
+;*** I/O Range 0 ***
+20,00,00,00, \  ; total length of io resource descriptor
+02,00,00,00, \  ; ResType_IO = 0x00000002
+01,00,0C,00, \  ; IOD_count / IOD_Type = 0x0c
+00,00,00,00, \  ; IOD_Alloc_Base / IOD_Alloc_End
+00,00,00,00, \  ; IOD_DesFlags / IOD_Alloc_Alias / IOD_Alloc_Decode
+F8,FF,08,00, \  ; IOR_Align / IOR_nPorts
+E8,02,EF,02, \  ; IOR_Min / IOR_Max
+00,00,00,00, \  ; IOR_RangeFlags / IOR_Alias / IOR_Decode
+;*** IRQ ***
+10,00,00,00, \  ; total length of irq resource descriptor
+04,00,00,00, \  ; ResType_IRQ - 0x00000004
+01,00,00,00, \  ; IRQD_Flags / IRQD_Alloc_Num
+08,00,00,00, \  ; IRQD_Req_Mask / IRQD_Reserved
+;*** TERMINATOR ***
+00,00,00,00
+;
+;-- Config for 3f8 - COM1 IRQAny
+HKR,Override,0004,1, \
+00,04,00,00,00,00,00,00, \
+;*** I/O Range 0 ***
+20,00,00,00, \  ; total length of io resource descriptor
+02,00,00,00, \  ; ResType_IO = 0x00000002
+01,00,0C,00, \  ; IOD_count / IOD_Type = 0x0c
+00,00,00,00, \  ; IOD_Alloc_Base / IOD_Alloc_End
+00,00,00,00, \  ; IOD_DesFlags / IOD_Alloc_Alias / IOD_Alloc_Decode
+F8,FF,08,00, \  ; IOR_Align / IOR_nPorts
+F8,03,FF,03, \  ; IOR_Min / IOR_Max
+00,00,00,00, \  ; IOR_RangeFlags / IOR_Alias / IOR_Decode
+;*** IRQ ***
+10,00,00,00, \  ; total length of irq resource descriptor
+04,00,00,00, \  ; ResType_IRQ - 0x00000004
+01,00,00,00, \  ; IRQD_Flags / IRQD_Alloc_Num
+FF,FF,00,00, \  ; IRQD_Req_Mask / IRQD_Reserved
+;*** TERMINATOR ***
+00,00,00,00
+;
+;--- Config for 2f8 0 COM2 IRQAny
+HKR,Override,0005,1, \
+00,04,00,00,00,00,00,00, \
+;*** I/O Range 0 ***
+20,00,00,00, \  ; total length of io resource descriptor
+02,00,00,00, \  ; ResType_IO = 0x00000002
+01,00,0C,00, \  ; IOD_count / IOD_Type = 0x0c
+00,00,00,00, \  ; IOD_Alloc_Base / IOD_Alloc_End
+00,00,00,00, \  ; IOD_DesFlags / IOD_Alloc_Alias / IOD_Alloc_Decode
+F8,FF,08,00, \  ; IOR_Align / IOR_nPorts
+F8,02,FF,02, \  ; IOR_Min / IOR_Max
+00,00,00,00, \  ; IOR_RangeFlags / IOR_Alias / IOR_Decode
+;*** IRQ ***
+10,00,00,00, \  ; total length of irq resource descriptor
+04,00,00,00, \  ; ResType_IRQ - 0x00000004
+01,00,00,00, \  ; IRQD_Flags / IRQD_Alloc_Num
+FF,FF,00,00, \  ; IRQD_Req_Mask / IRQD_Reserved
+;*** TERMINATOR ***
+00,00,00,00
+;
+;--- Config for 3e8 0 COM3 IRQAny
+HKR,Override,0006,1, \
+00,04,00,00,00,00,00,00, \
+;*** I/O Range 0 ***
+20,00,00,00, \  ; total length of io resource descriptor
+02,00,00,00, \  ; ResType_IO = 0x00000002
+01,00,0C,00, \  ; IOD_count / IOD_Type = 0x0c
+00,00,00,00, \  ; IOD_Alloc_Base / IOD_Alloc_End
+00,00,00,00, \  ; IOD_DesFlags / IOD_Alloc_Alias / IOD_Alloc_Decode
+F8,FF,08,00, \  ; IOR_Align / IOR_nPorts
+E8,03,EF,03, \  ; IOR_Min / IOR_Max
+00,00,00,00, \  ; IOR_RangeFlags / IOR_Alias / IOR_Decode
+;*** IRQ ***
+10,00,00,00, \  ; total length of irq resource descriptor
+04,00,00,00, \  ; ResType_IRQ - 0x00000004
+01,00,00,00, \  ; IRQD_Flags / IRQD_Alloc_Num
+FF,FF,00,00, \  ; IRQD_Req_Mask / IRQD_Reserved
+;*** TERMINATOR ***
+00,00,00,00
+;
+;--- Config for 2e8 0 COM4 IRQAny
+HKR,Override,0007,1, \
+00,04,00,00,00,00,00,00, \
+;*** I/O Range 0 ***
+20,00,00,00, \  ; total length of io resource descriptor
+02,00,00,00, \  ; ResType_IO = 0x00000002
+01,00,0C,00, \  ; IOD_count / IOD_Type = 0x0c
+00,00,00,00, \  ; IOD_Alloc_Base / IOD_Alloc_End
+00,00,00,00, \  ; IOD_DesFlags / IOD_Alloc_Alias / IOD_Alloc_Decode
+F8,FF,08,00, \  ; IOR_Align / IOR_nPorts
+E8,02,EF,02, \  ; IOR_Min / IOR_Max
+00,00,00,00, \  ; IOR_RangeFlags / IOR_Alias / IOR_Decode
+;*** IRQ ***
+10,00,00,00, \  ; total length of irq resource descriptor
+04,00,00,00, \  ; ResType_IRQ - 0x00000004
+01,00,00,00, \  ; IRQD_Flags / IRQD_Alloc_Num
+FF,FF,00,00, \  ; IRQD_Req_Mask / IRQD_Reserved
+;*** TERMINATOR ***
+00,00,00,00
+;
+;--- Config for anywhere- COMx IRQ Any
+HKR,Override,0008,1, \
+00,04,00,00,00,00,00,00, \
+;*** I/O Range 0 ***
+20,00,00,00, \  ; total length of io resource descriptor
+02,00,00,00, \  ; ResType_IO = 0x00000002
+01,00,0C,00, \  ; IOD_count / IOD_Type = 0x0c
+00,00,00,00, \  ; IOD_Alloc_Base / IOD_Alloc_End
+00,00,00,00, \  ; IOD_DesFlags / IOD_Alloc_Alias / IOD_Alloc_Decode
+F8,FF,08,00, \  ; IOR_Align / IOR_nPorts
+00,01,FF,03, \  ; IOR_Min / IOR_Max
+00,00,00,00, \  ; IOR_RangeFlags / IOR_Alias / IOR_Decode
+;*** IRQ ***
+10,00,00,00, \  ; total length of irq resource descriptor
+04,00,00,00, \  ; ResType_IRQ - 0x00000004
+01,00,00,00, \  ; IRQD_Flags / IRQD_Alloc_Num
+FF,FF,00,00, \  ; IRQD_Req_Mask / IRQD_Reserved
+;*** TERMINATOR ***
+00,00,00,00
+;
+;--- Config for anywhere- COMx IRQ None
+HKR,Override,0009,1, \
+00,04,00,00,00,00,00,00, \
+;*** I/O Range 0 ***
+20,00,00,00, \  ; total length of io resource descriptor
+02,00,00,00, \  ; ResType_IO = 0x00000002
+01,00,0C,00, \  ; IOD_count / IOD_Type = 0x0c
+00,00,00,00, \  ; IOD_Alloc_Base / IOD_Alloc_End
+00,00,00,00, \  ; IOD_DesFlags / IOD_Alloc_Alias / IOD_Alloc_Decode
+F8,FF,08,00, \  ; IOR_Align / IOR_nPorts
+00,01,FF,03, \  ; IOR_Min / IOR_Max
+00,00,00,00, \  ; IOR_RangeFlags / IOR_Alias / IOR_Decode
+;*** TERMINATOR ***
+00,00,00,00
+
+
+;-----------------------------------------------------------------------------
+; STRINGS
+;-----------------------------------------------------------------------------
+[Strings]
+
+;BEGIN ENG - US English Strings
+Provider = "Silicon Laboratories"
+SLAB = "Silicon Laboratories"
+
+PortDesc = "CP210x USB to UART Bridge Controller"
+
+CustomerDataPath = "CP210x USB to UART Bridge Controller"
+DriverSet = "CP210x USB to UART Bridge Controller Software"
+
+;END ENG - US English Strings
+
+;--- strings following this line should not be localized ---
+
+;*** end of file ***

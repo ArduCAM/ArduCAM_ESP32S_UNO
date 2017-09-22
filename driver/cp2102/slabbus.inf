@@ -1,0 +1,207 @@
+;*****************************************************************************
+;
+; slabbus.inf   -- Install the CP210x USB Composite Device drivers
+;
+; Copyright (c) 1997-2004 by MCCI 
+;
+; MCCI is a registered trademark of Moore Computer Consultants, Inc.
+;
+; NOTICE: This software is licensed, not sold.  Any modification of this
+; inf file to change the reference to an operating system or to change the
+; reference to a device is not permitted unless authorized in writing by
+; Moore Computer Consultants, Inc..
+;
+;*****************************************************************************
+
+[version]
+signature="$CHICAGO$"
+Class=USB
+ClassGuid={36FC9E60-c465-11cf-8056-444553540000}
+Provider=%Provider%
+DriverVer=03/07/2006, 4.38.4.127
+CatalogFile=slabbus.cat
+
+[ControlFlags]
+ExcludeFromSelect = *
+
+;-----------------------------------------------------------------------------
+; Specify target paths...
+;-----------------------------------------------------------------------------
+[DestinationDirs]
+DefaultDestDir                  = 11                    ; LDID_SYS
+SLABWdm.W95.CopyFiles       = 11                    ; LDID_SYS
+SLABWdm.NT.CopyFiles        = 12                    ; system32\drivers
+SLABWdm.NT.CopyFiles2        = 11                    ; system32
+PropPages.CopyFiles             = 11                    ; system
+
+;-----------------------------------------------------------------------------
+; Specify the install disks.  A bit unwieldy during development.
+;-----------------------------------------------------------------------------
+[SourceDisksNames]
+; diskid = description[, [tagfile] [, <unused>, subdir]]
+1=%DiskString%,"slabbus.sys",,
+
+[SourceDisksFiles]
+; filename = diskid[, [subdir] [, size]]
+slabbus.sys = 1
+slabwh95.sys = 1
+slabwhnt.sys = 1
+slabunin2k.exe = 1
+slabunin.exe = 1
+slabunin.u2k = 1
+slabunin.u98 = 1
+
+;-----------------------------------------------------------------------------
+; Table of Contents:  manufacturer, then devices.
+;-----------------------------------------------------------------------------
+[Manufacturer]
+%SLAB%=SLAB
+
+;-----------------------------------------------------------------------------
+; The devices
+;-----------------------------------------------------------------------------
+[SLAB]
+%SLAB.CdcBus.Desc% = SLABWdm.Install, USB\VID_10C4&PID_EA60
+
+;-----------------------------------------------------------------------------
+; How to install them:  On W9x, the [section] name is used directly.
+; On NT, the system first tries [section.NT], then [section].
+;-----------------------------------------------------------------------------
+
+;-----------------------------------------------------------------------------
+; Diagnostics Files CopyFiles List Section
+;-----------------------------------------------------------------------------
+[SLAB.CopyFiles]
+
+;-----------------------------------------------------------------------------
+; XXX when we have a property page DLL, add it to the following section.
+;-----------------------------------------------------------------------------
+[PropPages.CopyFiles]
+
+;-----------------------------------------------------------------------------
+;       How to install the WDM driver on W95/W98
+;-----------------------------------------------------------------------------
+[SLABWdm.Install]
+DriverVer=03/07/2006, 4.38.4.127
+CopyFiles       = SLABWdm.W95.CopyFiles, SLAB.CopyFiles, PropPages.CopyFiles
+AddReg          = SLABWdm.AddReg, SLABWdm.W95.AddReg, SLABWdmUnInst.Reg
+RemoveDevice 	= SLABWdm.RemDev
+
+;-----------------------------------------------------------------------------
+;       How to install the WDM driver on NT
+;-----------------------------------------------------------------------------
+[SLABWdm.Install.NT]
+DriverVer=03/07/2006, 4.38.4.127
+CopyFiles       = SLABWdm.NT.CopyFiles, SLABWdm.NT.CopyFiles2
+AddReg          = SLABWdm.AddReg, SLABWdm.NT.AddReg, SLABWdmUnInst.NT.Reg
+
+
+;-----------------------------------------------------------------------------
+;       How to start the WDM driver on NT
+;-----------------------------------------------------------------------------
+[SLABWdm.Install.NT.Services]
+AddService      = slabbus, 2, SLABWdm.AddService
+
+[SLABWdm.AddService]
+DisplayName             = %SLAB.Service.Desc%
+ServiceType             = 1     ; SERVICE_KERNEL_DRIVER
+StartType               = 3     ; SERVICE_DEMAND_START
+ErrorControl            = 1     ; SERVICE_ERROR_NORMAL
+ServiceBinary           = %12%\slabbus.sys
+LoadOrderGroup          = Base
+
+;-----------------------------------------------------------------------------
+;       WDM registry entries (all platforms)
+;-----------------------------------------------------------------------------
+[SLABWdm.AddReg]
+
+
+;-----------------------------------------------------------------------------
+;       WDM registry entries (W95/98) (including how to start the driver)
+;-----------------------------------------------------------------------------
+[SLABWdm.W95.AddReg]
+HKR,,DevLoader,,*ntkern
+HKR,,NTMPDriver,,slabbus.sys
+
+;-----------------------------------------------------------------------------
+;       WDM registry entries (NT only)
+;-----------------------------------------------------------------------------
+[SLABWdm.NT.AddReg]
+
+;-----------------------------------------------------------------------------
+;       The WDM copy list for Win95 -- different because things go in
+;       different places.  Also, we probably need to rename drivers 
+;       during the install.
+;-----------------------------------------------------------------------------
+[SLABWdm.W95.CopyFiles]
+slabbus.sys
+slabwh.sys,slabwh95.sys
+slabwh95.sys
+slabwhnt.sys
+slabunin.exe
+slabunin.u98
+
+;-----------------------------------------------------------------------------
+;       The WDM copy list for NT -- different because things go in
+;       different places.
+;-----------------------------------------------------------------------------
+[SLABWdm.NT.CopyFiles]
+slabbus.sys
+slabwh.sys,slabwhnt.sys
+slabwhnt.sys
+
+[SLABWdm.NT.CopyFiles2]
+slabunin2k.exe
+slabunin.u2k
+
+;-----------------------------------------------------------------------------
+;       The WDM uninstall list and registry entries -- 
+;       
+;-----------------------------------------------------------------------------
+
+[SLABWdm.RemDev]
+DELKEY=HKLM,%WINUN%\SLABCOMM&10C4&EA60
+
+[SLABWdmUnInst.Reg]
+HKLM,%WINUN%,"SLABCOMM&10C4&EA60"
+HKLM,%WINUN%\SLABCOMM&10C4&EA60 , "UninstallString",,"%11%\slabunin.exe %11%\slabunin.u98"
+HKLM,%WINUN%\SLABCOMM&10C4&EA60 , "DisplayName",,"CP210x USB to UART Bridge Controller"
+
+[SLABWdm.DelFiles]
+slabunin2k.exe = 1
+
+;-----------------------------------------------------------------------------
+;       The WDM uninstall list and registry entries for NT -- 
+;       
+;-----------------------------------------------------------------------------
+
+[SLABWdmUnInst.NT.Reg]
+HKLM,%WINUN%,"SLABCOMM&10C4&EA60"
+HKLM,%WINUN%\SLABCOMM&10C4&EA60 , "UninstallString",,"%11%\slabunin2k.exe %11%\slabunin.u2k"
+HKLM,%WINUN%\SLABCOMM&10C4&EA60 , "DisplayName",,"CP210x USB to UART Bridge Controller"
+
+;****************************************************************************
+; Localizable Strings
+;****************************************************************************
+[strings]
+
+;BEGIN ENG - US English Strings
+Provider = "Silicon Laboratories"
+SLAB = "Silicon Laboratories"
+DiskString = "CP210x USB Composite Device Installation disk"
+WINUN="Software\Microsoft\Windows\CurrentVersion\Uninstall"
+
+SLAB.CdcBus.Desc = "CP210x USB Composite Device"
+SLAB.Service.Desc = "CP210x USB Composite Device driver (WDM)"
+
+CustomerDataPath = "CP210x USB to UART Bridge Controller"
+DriverSet = "CP210x USB to UART Bridge Controller Software"
+
+
+;END ENG - US English Strings
+
+;-----------------------------------------------------------------------------
+; Following are symbolic constants which don't change per locale.
+;-----------------------------------------------------------------------------
+
+;*** end of file ***

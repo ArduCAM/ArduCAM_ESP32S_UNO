@@ -1,0 +1,144 @@
+;*****************************************************************************
+;
+; Name:  slabw2k.inf
+;
+; Function:
+;	Install the CP210x USB to UART Bridge Controller (WDM) on Win2000
+;
+; Copyright (c) 1997-2004 MCCI
+;
+; MCCI is a registered trademark of Moore Computer Consultants, Inc
+;
+; NOTICE: This software is licensed, not sold.  Any modification of this
+; inf file to change the reference to an operating system or to change the
+; reference to a device is not permitted unless authorized in writing by
+; Moore Computer Consultants, Inc.
+;
+;*****************************************************************************
+
+[Version]
+signature="$WINDOWS NT$"
+Class=Ports
+ClassGuid={4D36E978-E325-11CE-BFC1-08002BE10318}
+Provider=%Provider%
+DriverVer=03/07/2006, 4.38.4.127
+CatalogFile=slabser.cat
+
+[ControlFlags]
+ExcludeFromSelect = *
+
+[SourceDisksNames]
+; diskid = description[, [tagfile] [, <unused>, subdir]]
+1=%DiskString%,"slabser.sys",,
+
+[SourceDisksFiles]
+; filename = diskid[,[ subdir][, size]]
+slabser.sys = 1
+slabcmnt.sys = 1
+
+;-----------------------------------------------------------------------------
+; Specify target paths...
+;-----------------------------------------------------------------------------
+
+[DestinationDirs]
+DefaultDestDir = 12                    ; system32\drivers
+CopyFiles = 12                         ; system32\drivers
+CopyFiles.Win2K = 12                   ;
+
+;-----------------------------------------------------------------------------
+; Table of Contents
+;-----------------------------------------------------------------------------
+[Manufacturer]
+%SLAB%=SLAB
+
+;-----------------------------------------------------------------------------
+; Device-by-device entries
+;-----------------------------------------------------------------------------
+[SLAB]
+%SLAB.Comm.Desc% = SLAB.Install, USB\VID_10C4&PID_EA60&MI_00&OS_NT
+
+;-----------------------------------------------------------------------------
+; Installation instructions
+;-----------------------------------------------------------------------------
+
+[SLAB.Install.nt]
+AddReg		= SLAB.AddReg,SLAB.NT.AddReg
+CopyFiles	= CopyFiles, CopyFiles.Win2K
+
+;-----------------------------------------------------------------------------
+;  Registry
+;-----------------------------------------------------------------------------
+
+; common registry entries 
+[SLAB.AddReg]
+HKR,,NTMPDriver,,slabser.sys
+HKR,,EnableSurpriseRemovalHeuristics, 0x10001, 0x02, 0x00, 0x00, 0x00
+HKR,,RateLimitPurgeMS, 0x10001, 0x64, 0x00, 0x00, 0x00
+HKR,,OverrideDefaultPortSettings, 0x10001, 01,00,00,00
+HKR,,InitialBaudRate, 0x10001, 00,C2,01,00                      ;115200 initial baud rate
+HKR,,InitialLineControl,, "8N1"                                 ;8-bits, No parity, 1 stop bit
+
+; only for NT...
+[SLAB.NT.AddReg]
+HKR,,PortSubClass,1,01
+HKR,,EnumPropPages32,,"MsPorts.dll,SerialPortPropPageProvider"
+
+;-----------------------------------------------------------------------------
+;  Copy lists
+;-----------------------------------------------------------------------------
+[CopyFiles]
+
+[CopyFiles.Win2K]
+slabser.sys
+slabcm.sys,slabcmnt.sys
+slabcmnt.sys
+
+
+;-----------------------------------------------------------------------------
+;  NT Services installation
+;-----------------------------------------------------------------------------
+
+[SLAB.Install.NT.Services]
+AddService = slabser, 0x00000002, SLAB.Install.AddService
+
+
+[SLAB.Install.AddService]
+DisplayName	= %SLAB.Service.Name%
+Description	= %SLAB.Service.Desc%
+ServiceType	= 1			;%SERVICE_KERNEL_DRIVER%
+StartType	= 3			;%SERVICE_DEMAND_START%
+ErrorControl	= 1			;%SERVICE_ERROR_NORMAL%	
+ServiceBinary	= %12%\slabser.sys
+
+
+
+;-----------------------------------------------------------------------------
+; STRINGS
+;-----------------------------------------------------------------------------
+[Strings]
+
+;<<localize the following>>
+
+;BEGIN ENG - US English Strings
+
+Provider = "Silicon Laboratories"
+SLAB = "Silicon Laboratories"
+DiskString = "CP210x USB to UART Bridge Controller Drivers"
+
+SLAB.Comm.Desc = "CP210x USB to UART Bridge Controller"
+SLAB.Service.Name = "CP210x USB to UART Bridge Controller Drivers"
+SLAB.Service.Desc = "CP210x USB to UART Bridge Controller Drivers"
+
+
+CustomerDataPath = "CP210x USB to UART Bridge Controller"
+DriverSet = "CP210x USB to UART Bridge Controller Driver Set"
+
+
+;END ENG - US English Strings
+
+;-----------------------------------------------------------------------------
+; The following are symbolic constants which don't change per locale.
+;-----------------------------------------------------------------------------
+
+
+;*** end of file ***

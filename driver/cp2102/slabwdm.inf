@@ -1,0 +1,151 @@
+;*****************************************************************************
+;
+; Name:  slabwdm.inf
+;
+; Function:
+;	Install the CP210x USB to UART Bridge Controller (WDM) on Win9x
+;
+; Copyright (c) 1997-2004 MCCI
+;
+; MCCI is a registered trademark of Moore Computer Consultants, Inc
+;
+; NOTICE: This software is licensed, not sold.  Any modification of this
+; inf file to change the reference to an operating system or to change the
+; reference to a device is not permitted unless authorized in writing by
+; Moore Computer Consultants, Inc..
+;
+;*****************************************************************************
+
+[Version]
+signature="$CHICAGO$"
+Class=USB
+ClassGuid={36FC9E60-c465-11cf-8056-444553540000}
+Provider=%Provider%
+DriverVer=03/07/2006, 4.38.4.127
+CatalogFile=slabser.cat
+
+
+[ControlFlags]
+ExcludeFromSelect = *
+
+;-----------------------------------------------------------------------------
+;   Change A:\ to source drive (or omit to always (?) be prompted)
+;-----------------------------------------------------------------------------
+[SourceDisksNames]
+; diskid = description[, [tagfile] [, <unused>, subdir]]
+;	having the tagfile non-null seems to help...
+1=%DiskString%,"slabser.sys",,
+
+[SourceDisksFiles]
+; filename = diskid[,[ subdir][, size]]
+slabser.sys = 1
+slabcr.sys = 1
+slabvcr.vxd = 1
+slabcm95.sys = 1
+slabcmnt.sys = 1
+slabcomm.vxd = 1
+slabvcd.vxd = 1
+slabvxd.inf = 1
+
+;-----------------------------------------------------------------------------
+; Specify target paths...
+;-----------------------------------------------------------------------------
+[DestinationDirs]
+DefaultDestDir          = 11                    ; LDID_SYS
+CopyFiles               = 11                    ; system
+CopyFiles.W95		= 11			; system (for VXDs)
+CopyFiles.sys           = 11                    ; where .sys files go.
+CopyFiles.W95.sys       = 11                    ; where .sys files go.
+CopyFiles.W95.inf       = 11,other              ; INF Directory\other.
+
+;-----------------------------------------------------------------------------
+; Table of Contents
+;-----------------------------------------------------------------------------
+[Manufacturer]
+%SLAB%=SLAB
+
+;-----------------------------------------------------------------------------
+; Device-by-device entries
+;-----------------------------------------------------------------------------
+[SLAB]
+%SLAB.Comm.Desc% = SLAB.Install, USB\VID_10C4&PID_EA60&MI_00&OS_9X
+
+;-----------------------------------------------------------------------------
+; Installation instructions
+;-----------------------------------------------------------------------------
+
+[SLAB.Install]
+AddReg		= SLAB.AddReg,SLAB.W95.AddReg,SLAB.W95.AddReg.CRGuid
+CopyFiles	= CopyFiles, CopyFiles.W95, CopyFiles.sys, CopyFiles.W95.sys, CopyFiles.W95.Inf
+DriverVer=03/07/2006, 4.38.4.127
+
+;-----------------------------------------------------------------------------
+;  Registry
+;-----------------------------------------------------------------------------
+
+; common registry entries 
+[SLAB.AddReg]
+HKR,,NTMPDriver,,slabser.sys
+HKR,,CRUpperDescription,,%UpperDescription%
+HKR,,EnableSurpriseRemovalHeuristics, 0x10001, 0x02, 0x00, 0x00, 0x00
+HKR,,RateLimitPurgeMS, 0x10001, 0x64, 0x00, 0x00, 0x00
+HKR,,OverrideDefaultPortSettings, 0x10001, 01,00,00,00
+HKR,,InitialBaudRate, 0x10001, 00,C2,01,00                      ;115200 initial baud rate
+HKR,,InitialLineControl,, "8N1"                                 ;8-bits, No parity, 1 stop bit
+
+; only for Win95....
+[SLAB.W95.AddReg]
+HKR,,DevLoader,,*ntkern
+
+[SLAB.W95.Addreg.CRGuid]
+HKR,,CRGuid,,{E4768D57-352E-4495-880C-056A7CB34611}
+
+;-----------------------------------------------------------------------------
+;  Copy lists
+;-----------------------------------------------------------------------------
+[CopyFiles]
+
+[CopyFiles.W95]
+slabvcr.vxd
+slabcomm.vxd
+slabvcd.vxd
+
+[CopyFiles.sys]
+slabser.sys
+slabcr.sys
+
+[CopyFiles.W95.sys]
+slabcm.sys,slabcm95.sys
+slabcm95.sys
+slabcmnt.sys
+
+[Copyfiles.W95.inf]
+slabvxd.inf
+
+
+;-----------------------------------------------------------------------------
+; STRINGS
+;-----------------------------------------------------------------------------
+[Strings]
+
+;BEGIN ENG - US English Strings
+Provider = "Silicon Laboratories"
+SLAB = "Silicon Laboratories"
+DiskString = "CP210x USB to UART Bridge Controller Drivers"
+
+SLAB.Comm.Desc = "CP210x USB to UART Bridge Controller"
+UpperDescription = "CP210x USB to UART Bridge Controller"
+
+CustomerDataPath = "CP210x USB to UART Bridge Controller"
+DriverSet = "CP210x USB to UART Bridge Controller Driver Set"
+
+
+;END ENG - US English Strings
+
+
+;-----------------------------------------------------------------------------
+; The following are symbolic constants which don't change per locale.
+;-----------------------------------------------------------------------------
+
+
+;*** end of file ***

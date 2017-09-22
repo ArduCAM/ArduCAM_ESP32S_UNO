@@ -1,0 +1,98 @@
+CP210x Windows Driver v4.38 Release Notes
+Copyright (C) 2006 Silicon Laboratories, Inc.
+
+This release contains the following components:
+
+* slabunin.exe
+* slabunin2k.exe
+* slabunin.u98
+* slabunin.u2k
+* slabbus.cat
+* slabser.cat
+* slabbus.inf
+* slabvxd.inf
+* slabw2k.inf
+* slabwdm.inf
+* slabbus.sys
+* slabcm95.sys
+* slabcmnt.sys
+* slabcr.sys
+* slabser.sys
+* slabwh95.sys
+* slabwhnt.sys
+* slabcomm.vxd
+* slabvcd.vxd
+* slabvcr.vxd
+* Readme.txt (this file)
+
+
+Driver Installation
+-------------------
+
+	See Kit User's Guide for installation instructions.
+
+
+CP210x Windows Driver Revision History
+--------------------------------------
+
+version 4.38
+	New features/Enhancements
+	-------------------------
+	Extended suprise removal support added to fix COM port hang.
+	WHQL Certified for Windows Server 2003.
+
+Version 4.28a
+	New features/Enhancements
+	-------------------------
+	WHQL Certified for Windows XP and 2000.
+
+Version 4.28
+	New features/Enhancements
+	-------------------------
+	Includes Preinstaller executable and with added preinstaller support in uninstaller
+	executable and ini files.
+	
+	Corrections
+	-----------
+	Fixed driver lock condition caused by certain invalid port settings.
+
+	Fixed Windows 98 PreInstaller issue.
+
+
+Version 4.20
+
+	New features/Enhancements
+	-------------------------
+
+	Changed driver binary file names from cyg_* to slab*.  Also changed 
+	default inf file strings to SLAB and Silicon Laboratories.
+
+	This installation includes catalog files for Windows 2000/XP Windows 
+	Hardware Quality Lab (WHQL) Certification.
+
+	
+	Corrections
+        -----------
+
+	Modified behavior of SERIAL_EV_TXEMPTY event notification.  Applications 
+	will no longer miss TXEMPTY events if a	write is pending during the 
+	IOCTL_SERIAL_WAIT_ON_MASK control request.
+
+
+Version 4.16
+
+	New features/Enhancements
+	-------------------------
+	
+	Corrections
+        -----------
+
+	Changed behavior for IOCTL_SERIAL_LSRMST_INSERT for correct modem 
+	event insertion.
+
+
+Version 4.09
+	
+	Initial Release
+
+

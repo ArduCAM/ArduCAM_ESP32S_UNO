@@ -1,0 +1,10 @@
+*VID_10C4&PID_EA60*
+Silicon Laboratories
+slabbus.inf
+slabwdm.inf
+slabvxd.inf
+NoQuiet
+NoLeaveSource
+SLABCOMM&10C4&EA60
+C:\Program Files\SiLabs\MCU\CP210x
+C:\Program Files\SiLabs\MCU\CP210x
