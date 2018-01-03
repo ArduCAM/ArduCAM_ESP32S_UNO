@@ -3,6 +3,9 @@ ArduCAM ESP32 Series Development Boards
 ## Steps to install Arduino ESP32 support on Windows
 ### Tested on 32 and 64 bit Windows 10 machines
 
+# ArduCAM ESP32 UNO MINI Camera Demo Tutorial
+[![IMAGE ALT TEXT](https://github.com/UCTRONICS/pic/blob/master/Arducam_ESP32_Camera.jpeg)](https://youtu.be/o8jauiegWuI  "ArduCAM ESP32 UNO MINI Camera Demo Tutorial")
+
 1. Download and install the latest Arduino IDE ```Windows Installer``` from [arduino.cc](https://www.arduino.cc/en/Main/Software)
 2. Download and install Git from [git-scm.com](https://git-scm.com/download/win)
 3. Start ```Git GUI``` and run through the following steps:
