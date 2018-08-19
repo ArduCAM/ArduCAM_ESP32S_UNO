@@ -23,6 +23,7 @@ extern "C" {
 #include "driver/sdmmc_defs.h"
 #include "sdmmc_cmd.h"
 }
+#include "ff.h"
 #include "SD_MMC.h"
 
 using namespace fs;
@@ -34,20 +35,40 @@ SDMMCFS::SDMMCFS(FSImplPtr impl)
     : FS(impl), _card(NULL)
 {}
 
-bool SDMMCFS::begin(const char * mountpoint)
+bool SDMMCFS::begin(const char * mountpoint, bool mode1bit)
 {
     if(_card) {
         return true;
     }
     //mount
     sdmmc_slot_config_t slot_config = SDMMC_SLOT_CONFIG_DEFAULT();
-    sdmmc_host_t host = SDMMC_HOST_DEFAULT();
+    sdmmc_host_t host = {
+        .flags = SDMMC_HOST_FLAG_4BIT,
+        .slot = SDMMC_HOST_SLOT_1,
+        .max_freq_khz = SDMMC_FREQ_DEFAULT,
+        .io_voltage = 3.3f,
+        .init = &sdmmc_host_init,
+        .set_bus_width = &sdmmc_host_set_bus_width,
+        .get_bus_width = &sdmmc_host_get_slot_width,
+        .set_card_clk = &sdmmc_host_set_card_clk,
+        .do_transaction = &sdmmc_host_do_transaction,
+        .deinit = &sdmmc_host_deinit,
+        .io_int_enable = sdmmc_host_io_int_enable,
+        .io_int_wait = sdmmc_host_io_int_wait,
+        .command_timeout_ms = 0,
+    };
     host.max_freq_khz = SDMMC_FREQ_HIGHSPEED;
-    //host.flags = SDMMC_HOST_FLAG_1BIT; //use 1-line SD mode
+#ifdef BOARD_HAS_1BIT_SDMMC
+    mode1bit = true;
+#endif
+    if(mode1bit) {
+        host.flags = SDMMC_HOST_FLAG_1BIT; //use 1-line SD mode
+    }
 
     esp_vfs_fat_sdmmc_mount_config_t mount_config = {
         .format_if_mount_failed = false,
-        .max_files = 5
+        .max_files = 5,
+        .allocation_unit_size = 0
     };
 
     esp_err_t ret = esp_vfs_fat_sdmmc_mount(mountpoint, &host, &slot_config, &mount_config, &_card);
@@ -93,5 +114,32 @@ uint64_t SDMMCFS::cardSize()
     return (uint64_t)_card->csd.capacity * _card->csd.sector_size;
 }
 
+uint64_t SDMMCFS::totalBytes()
+{
+	FATFS* fsinfo;
+	DWORD fre_clust;
+	if(f_getfree("0:",&fre_clust,&fsinfo)!= 0) return 0;
+    uint64_t size = ((uint64_t)(fsinfo->csize))*(fsinfo->n_fatent - 2)
+#if _MAX_SS != 512
+        *(fsinfo->ssize);
+#else
+        *512;
+#endif
+	return size;
+}
+
+uint64_t SDMMCFS::usedBytes()
+{
+	FATFS* fsinfo;
+	DWORD fre_clust;
+	if(f_getfree("0:",&fre_clust,&fsinfo)!= 0) return 0;
+	uint64_t size = ((uint64_t)(fsinfo->csize))*((fsinfo->n_fatent - 2) - (fsinfo->free_clst))
+#if _MAX_SS != 512
+        *(fsinfo->ssize);
+#else
+        *512;
+#endif
+	return size;
+}
 
 SDMMCFS SD_MMC = SDMMCFS(FSImplPtr(new VFSImpl()));

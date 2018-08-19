@@ -38,11 +38,6 @@ extern "C" {
 #define ERR_ESP_AES_INVALID_KEY_LENGTH                -0x0020  /**< Invalid key length. */
 #define ERR_ESP_AES_INVALID_INPUT_LENGTH              -0x0022  /**< Invalid data input length. */
 
-typedef struct {
-    enum AES_BITS aesbits;
-    uint8_t key[32];
-} key_context, KEY_CTX;
-
 /**
  * \brief          AES context structure
  *
@@ -52,10 +47,8 @@ typedef struct {
  *                 generating an extra round key
  */
 typedef struct {
-    int nr;                     /*!<  number of rounds  */
-    uint32_t *rk;               /*!<  AES round keys    */
-    KEY_CTX enc;
-    KEY_CTX dec;
+    uint8_t key_bytes;
+    uint8_t key[32];
 } esp_aes_context;
 
 /**
@@ -94,7 +87,7 @@ void esp_aes_init( esp_aes_context *ctx );
 void esp_aes_free( esp_aes_context *ctx );
 
 /**
- * \brief          AES key schedule (encryption)
+ * \brief          AES set key schedule (encryption or decryption)
  *
  * \param ctx      AES context to be initialized
  * \param key      encryption key
@@ -102,18 +95,7 @@ void esp_aes_free( esp_aes_context *ctx );
  *
  * \return         0 if successful, or ERR_AES_INVALID_KEY_LENGTH
  */
-int esp_aes_setkey_enc( esp_aes_context *ctx, const unsigned char *key, unsigned int keybits );
-
-/**
- * \brief          AES key schedule (decryption)
- *
- * \param ctx      AES context to be initialized
- * \param key      decryption key
- * \param keybits  must be 128, 192 or 256
- *
- * \return         0 if successful, or ERR_AES_INVALID_KEY_LENGTH
- */
-int esp_aes_setkey_dec( esp_aes_context *ctx, const unsigned char *key, unsigned int keybits );
+int esp_aes_setkey( esp_aes_context *ctx, const unsigned char *key, unsigned int keybits );
 
 /**
  * \brief          AES-ECB block encryption/decryption
@@ -261,7 +243,10 @@ int esp_aes_crypt_ctr( esp_aes_context *ctx,
  * \param input     Plaintext block
  * \param output    Output (ciphertext) block
  */
-void esp_aes_encrypt( esp_aes_context *ctx, const unsigned char input[16], unsigned char output[16] );
+int esp_internal_aes_encrypt( esp_aes_context *ctx, const unsigned char input[16], unsigned char output[16] );
+
+/** Deprecated, see esp_aes_internal_encrypt */
+void esp_aes_encrypt( esp_aes_context *ctx, const unsigned char input[16], unsigned char output[16] ) __attribute__((deprecated));
 
 /**
  * \brief           Internal AES block decryption function
@@ -272,7 +257,10 @@ void esp_aes_encrypt( esp_aes_context *ctx, const unsigned char input[16], unsig
  * \param input     Ciphertext block
  * \param output    Output (plaintext) block
  */
-void esp_aes_decrypt( esp_aes_context *ctx, const unsigned char input[16], unsigned char output[16] );
+int esp_internal_aes_decrypt( esp_aes_context *ctx, const unsigned char input[16], unsigned char output[16] );
+
+/** Deprecated, see esp_aes_internal_decrypt */
+void esp_aes_decrypt( esp_aes_context *ctx, const unsigned char input[16], unsigned char output[16] ) __attribute__((deprecated));
 
 #ifdef __cplusplus
 }

@@ -9,7 +9,7 @@
 #include "Update.h"
 
 
-//#define OTA_DEBUG Serial
+// #define OTA_DEBUG Serial
 
 ArduinoOTAClass::ArduinoOTAClass()
 : _port(0)
@@ -20,6 +20,7 @@ ArduinoOTAClass::ArduinoOTAClass()
 , _size(0)
 , _cmd(0)
 , _ota_port(0)
+, _ota_timeout(1000)
 , _start_callback(NULL)
 , _end_callback(NULL)
 , _error_callback(NULL)
@@ -31,39 +32,45 @@ ArduinoOTAClass::~ArduinoOTAClass(){
     _udp_ota.stop();
 }
 
-void ArduinoOTAClass::onStart(THandlerFunction fn) {
+ArduinoOTAClass& ArduinoOTAClass::onStart(THandlerFunction fn) {
     _start_callback = fn;
+    return *this;
 }
 
-void ArduinoOTAClass::onEnd(THandlerFunction fn) {
+ArduinoOTAClass& ArduinoOTAClass::onEnd(THandlerFunction fn) {
     _end_callback = fn;
+    return *this;
 }
 
-void ArduinoOTAClass::onProgress(THandlerFunction_Progress fn) {
+ArduinoOTAClass& ArduinoOTAClass::onProgress(THandlerFunction_Progress fn) {
     _progress_callback = fn;
+    return *this;
 }
 
-void ArduinoOTAClass::onError(THandlerFunction_Error fn) {
+ArduinoOTAClass& ArduinoOTAClass::onError(THandlerFunction_Error fn) {
     _error_callback = fn;
+    return *this;
 }
 
-void ArduinoOTAClass::setPort(uint16_t port) {
+ArduinoOTAClass& ArduinoOTAClass::setPort(uint16_t port) {
     if (!_initialized && !_port && port) {
         _port = port;
     }
+    return *this;
 }
 
-void ArduinoOTAClass::setHostname(const char * hostname) {
+ArduinoOTAClass& ArduinoOTAClass::setHostname(const char * hostname) {
     if (!_initialized && !_hostname.length() && hostname) {
         _hostname = hostname;
     }
+    return *this;
 }
 
 String ArduinoOTAClass::getHostname() {
     return _hostname;
 }
 
-void ArduinoOTAClass::setPassword(const char * password) {
+ArduinoOTAClass& ArduinoOTAClass::setPassword(const char * password) {
     if (!_initialized && !_password.length() && password) {
         MD5Builder passmd5;
         passmd5.begin();
@@ -71,20 +78,24 @@ void ArduinoOTAClass::setPassword(const char * password) {
         passmd5.calculate();
         _password = passmd5.toString();
     }
+    return *this;
 }
 
-void ArduinoOTAClass::setPasswordHash(const char * password) {
+ArduinoOTAClass& ArduinoOTAClass::setPasswordHash(const char * password) {
     if (!_initialized && !_password.length() && password) {
         _password = password;
     }
+    return *this;
 }
 
-void ArduinoOTAClass::setRebootOnSuccess(bool reboot){
+ArduinoOTAClass& ArduinoOTAClass::setRebootOnSuccess(bool reboot){
     _rebootOnSuccess = reboot;
+    return *this;
 }
 
-void ArduinoOTAClass::setMdnsEnabled(bool enabled){
+ArduinoOTAClass& ArduinoOTAClass::setMdnsEnabled(bool enabled){
     _mdnsEnabled = enabled;
+    return *this;
 }
 
 void ArduinoOTAClass::begin() {
@@ -122,11 +133,11 @@ void ArduinoOTAClass::begin() {
 }
 
 int ArduinoOTAClass::parseInt(){
-    char data[16];
+    char data[INT_BUFFER_SIZE];
     uint8_t index = 0;
     char value;
     while(_udp_ota.peek() == ' ') _udp_ota.read();
-    while(true){
+    while(index < INT_BUFFER_SIZE - 1){
         value = _udp_ota.peek();
         if(value < '0' || value > '9'){
             data[index++] = '\0';
@@ -139,13 +150,13 @@ int ArduinoOTAClass::parseInt(){
 
 String ArduinoOTAClass::readStringUntil(char end){
     String res = "";
-    char value;
+    int value;
     while(true){
         value = _udp_ota.read();
-        if(value == '\0' || value == end){
+        if(value <= 0 || value == end){
             return res;
         }
-        res += value;
+        res += (char)value;
     }
     return res;
 }
@@ -250,8 +261,9 @@ void ArduinoOTAClass::_runUpdate() {
     }
 
     uint32_t written = 0, total = 0, tried = 0;
+
     while (!Update.isFinished() && client.connected()) {
-        size_t waited = 1000;
+        size_t waited = _ota_timeout;
         size_t available = client.available();
         while (!available && waited){
             delay(1);
@@ -347,19 +359,38 @@ void ArduinoOTAClass::_runUpdate() {
     }
 }
 
+void ArduinoOTAClass::end() {
+    _initialized = false;
+    _udp_ota.stop();
+    if(_mdnsEnabled){
+        MDNS.end();
+    }
+    _state = OTA_IDLE;
+#ifdef OTA_DEBUG
+    OTA_DEBUG.println("OTA server stopped.");
+#endif
+}
+
 void ArduinoOTAClass::handle() {
+    if (!_initialized) {
+        return; 
+    }
     if (_state == OTA_RUNUPDATE) {
         _runUpdate();
         _state = OTA_IDLE;
     }
     if(_udp_ota.parsePacket()){
         _onRx();
-        _udp_ota.flush();
     }
+    _udp_ota.flush(); // always flush, even zero length packets must be flushed.
 }
 
 int ArduinoOTAClass::getCommand() {
     return _cmd;
+}
+
+void ArduinoOTAClass::setTimeout(int timeoutInMillis) {
+    _ota_timeout = timeoutInMillis;
 }
 
 #if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_ARDUINOOTA)

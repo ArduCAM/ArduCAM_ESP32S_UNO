@@ -42,14 +42,14 @@ bool WiFiMulti::addAP(const char* ssid, const char *passphrase)
     return APlistAdd(ssid, passphrase);
 }
 
-uint8_t WiFiMulti::run(void)
+uint8_t WiFiMulti::run(uint32_t connectTimeout)
 {
 
     int8_t scanResult;
     uint8_t status = WiFi.status();
-    if(status == WL_DISCONNECTED || status == WL_NO_SSID_AVAIL || status == WL_IDLE_STATUS || status == WL_CONNECT_FAILED) {
+    if(status != WL_CONNECTED || status == WL_NO_SSID_AVAIL || status == WL_IDLE_STATUS || status == WL_CONNECT_FAILED) {
 
-        scanResult = WiFi.scanComplete();
+        scanResult = WiFi.scanNetworks();
         if(scanResult == WIFI_SCAN_RUNNING) {
             // scan is running
             return WL_NO_SSID_AVAIL;
@@ -117,9 +117,10 @@ uint8_t WiFiMulti::run(void)
 
                 WiFi.begin(bestNetwork.ssid, bestNetwork.passphrase, bestChannel, bestBSSID);
                 status = WiFi.status();
-
-                // wait for connection or fail
-                while(status != WL_CONNECTED && status != WL_NO_SSID_AVAIL && status != WL_CONNECT_FAILED) {
+                
+                auto startTime = millis();
+                // wait for connection, fail, or timeout
+                while(status != WL_CONNECTED && status != WL_NO_SSID_AVAIL && status != WL_CONNECT_FAILED && (millis() - startTime) <= connectTimeout) {
                     delay(10);
                     status = WiFi.status();
                 }

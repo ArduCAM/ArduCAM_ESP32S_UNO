@@ -34,10 +34,13 @@ void esp_reent_init(struct _reent* r);
 void esp_setup_syscall_table();
 
 /**
- * Initialize hardware timer used as time source for newlib time functions.
- *
- * Called from the startup code, not intended to be called from application.
+ * Update current microsecond time from RTC
  */
-void esp_setup_time_syscalls();
+void esp_set_time_from_rtc();
+
+/*
+ * Sync counters RTC and FRC. Update boot_time.
+ */
+void esp_sync_counters_rtc_and_frc();
 
 #endif //__ESP_NEWLIB_H__

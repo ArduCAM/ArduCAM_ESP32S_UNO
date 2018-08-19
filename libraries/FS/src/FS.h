@@ -47,7 +47,9 @@ enum SeekMode {
 class File : public Stream
 {
 public:
-    File(FileImplPtr p = FileImplPtr()) : _p(p) {}
+    File(FileImplPtr p = FileImplPtr()) : _p(p) {
+        _timeout = 0;
+    }
 
     size_t write(uint8_t) override;
     size_t write(const uint8_t *buf, size_t size) override;
@@ -70,6 +72,7 @@ public:
     size_t size() const;
     void close();
     operator bool() const;
+    time_t getLastWrite();
     const char* name() const;
 
     boolean isDirectory(void);

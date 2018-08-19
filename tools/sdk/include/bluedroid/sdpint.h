@@ -25,11 +25,12 @@
 #ifndef  SDP_INT_H
 #define  SDP_INT_H
 
-#include "bt_target.h"
-#include "sdp_api.h"
-#include "l2c_api.h"
+#include "common/bt_target.h"
+#include "common/bt_defs.h"
+#include "stack/sdp_api.h"
+#include "stack/l2c_api.h"
 
-
+#if (SDP_INCLUDED == TRUE)
 /* Continuation length - we use a 2-byte offset */
 #define SDP_CONTINUATION_LEN        2
 #define SDP_MAX_CONTINUATION_LEN    16          /* As per the spec */
@@ -236,6 +237,7 @@ extern tSDP_CB *sdp_cb_ptr;
 
 /* Functions provided by sdp_main.c */
 extern void     sdp_init (void);
+extern void     sdp_deinit (void);
 extern void     sdp_disconnect (tCONN_CB *p_ccb, UINT16 reason);
 
 #if (defined(SDP_DEBUG) && SDP_DEBUG == TRUE)
@@ -309,6 +311,6 @@ extern void sdp_disc_server_rsp (tCONN_CB *p_ccb, BT_HDR *p_msg);
 #define sdp_disc_server_rsp(p_ccb, p_msg)
 #endif
 
-
+#endif  ///SDP_INCLUDED == TRUE
 
 #endif

@@ -43,7 +43,7 @@ public:
     bool config(IPAddress local_ip, IPAddress gateway, IPAddress subnet, IPAddress dns1 = (uint32_t)0x00000000, IPAddress dns2 = (uint32_t)0x00000000);
 
     bool reconnect();
-    bool disconnect(bool wifioff = false);
+    bool disconnect(bool wifioff = false, bool eraseap = false);
 
     bool isConnected();
 
@@ -51,6 +51,7 @@ public:
     bool getAutoConnect();
 
     bool setAutoReconnect(bool autoReconnect);
+    bool getAutoReconnect();
 
     uint8_t waitForConnectResult();
 
@@ -71,7 +72,7 @@ public:
     bool setHostname(const char * hostname);
 
     // STA WiFi info
-    wl_status_t status();
+    static wl_status_t status();
     String SSID() const;
     String psk() const;
 
@@ -82,8 +83,8 @@ public:
 
     static void _setStatus(wl_status_t status);
 protected:
-    static wl_status_t _status;
     static bool _useStaticIp;
+    static bool _autoReconnect;
 
 public: 
     bool beginSmartConfig();

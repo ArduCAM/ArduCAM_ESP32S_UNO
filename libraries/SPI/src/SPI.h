@@ -22,6 +22,7 @@
 #define _SPI_H_INCLUDED
 
 #include <stdlib.h>
+#include "pins_arduino.h"
 #include "esp32-hal-spi.h"
 
 class SPISettings
@@ -59,6 +60,8 @@ public:
     void setDataMode(uint8_t dataMode);
     void setFrequency(uint32_t freq);
     void setClockDivider(uint32_t clockDiv);
+    
+    uint32_t getClockDivider();
 
     void beginTransaction(SPISettings settings);
     void endTransaction(void);

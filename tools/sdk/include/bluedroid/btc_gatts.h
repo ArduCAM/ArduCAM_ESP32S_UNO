@@ -15,7 +15,7 @@
 #ifndef __BTC_GATTS_H__
 #define __BTC_GATTS_H__
 
-#include "btc_task.h"
+#include "btc/btc_task.h"
 #include "esp_bt_defs.h"
 #include "esp_gatt_defs.h"
 #include "esp_gatts_api.h"
@@ -123,7 +123,8 @@ typedef union {
     } send_rsp;
 
     //BTC_GATTS_SET_ATTR_VALUE
-    struct set_attr_val_args{
+    struct set_attr_val_args {
+        uint16_t handle;
         uint16_t length;
         uint8_t *value;
     } set_attr_val;
@@ -146,7 +147,7 @@ typedef union {
 void btc_gatts_call_handler(btc_msg_t *msg);
 void btc_gatts_cb_handler(btc_msg_t *msg);
 void btc_gatts_arg_deep_copy(btc_msg_t *msg, void *p_dest, void *p_src);
-void btc_gatts_get_attr_value(uint16_t attr_handle, uint16_t *length, uint8_t **value);
+esp_gatt_status_t btc_gatts_get_attr_value(uint16_t attr_handle, uint16_t *length, uint8_t **value);
 
 
 #endif /* __BTC_GATTS_H__ */

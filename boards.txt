@@ -1,32 +1,75 @@
 menu.UploadSpeed=Upload Speed
 menu.FlashFreq=Flash Frequency
+menu.FlashMode=Flash Mode
+menu.FlashSize=Flash Size
+menu.PartitionScheme=Partition Scheme
 menu.DebugLevel=Core Debug Level
+menu.PSRAM=PSRAM
 
 ##############################################################
 
 ArduCAM_ESP32S_UNO.name=ArduCAM ESP32S UNO
 
 ArduCAM_ESP32S_UNO.upload.tool=esptool
-ArduCAM_ESP32S_UNO.upload.maximum_size=1044464
-ArduCAM_ESP32S_UNO.upload.maximum_data_size=294912
+ArduCAM_ESP32S_UNO.upload.maximum_size=1310720
+ArduCAM_ESP32S_UNO.upload.maximum_data_size=327680
 ArduCAM_ESP32S_UNO.upload.wait_for_upload_port=true
 
-ArduCAM_ESP32S_UNO.serial.disableDTR=True  
-ArduCAM_ESP32S_UNO.serial.disableRTS=True
+ArduCAM_ESP32S_UNO.serial.disableDTR=true
+ArduCAM_ESP32S_UNO.serial.disableRTS=true
 
-ArduCAM_ESP32S_UNO.build.mcu=esp32
-ArduCAM_ESP32S_UNO.build.core=esp32
+ArduCAM_ESP32S_UNO.build.mcu=ArduCAM_ESP32S_UNO
+ArduCAM_ESP32S_UNO.build.core=ArduCAM_ESP32S_UNO
 ArduCAM_ESP32S_UNO.build.variant=ArduCAM_ESP32S_UNO
-ArduCAM_ESP32S_UNO.build.board=ArduCAM_ESP32S_UNO
+ArduCAM_ESP32S_UNO.build.board=ArduCAM_ESP32S_UNO_DEV
 
 ArduCAM_ESP32S_UNO.build.f_cpu=240000000L
-ArduCAM_ESP32S_UNO.build.flash_mode=dio
 ArduCAM_ESP32S_UNO.build.flash_size=4MB
+ArduCAM_ESP32S_UNO.build.flash_freq=40m
+ArduCAM_ESP32S_UNO.build.flash_mode=dio
+ArduCAM_ESP32S_UNO.build.boot=dio
+ArduCAM_ESP32S_UNO.build.partitions=default
+ArduCAM_ESP32S_UNO.build.defines=
+
+ArduCAM_ESP32S_UNO.menu.PSRAM.disabled=Disabled
+ArduCAM_ESP32S_UNO.menu.PSRAM.disabled.build.defines=
+ArduCAM_ESP32S_UNO.menu.PSRAM.enabled=Enabled
+ArduCAM_ESP32S_UNO.menu.PSRAM.enabled.build.defines=-DBOARD_HAS_PSRAM -mfix-ArduCAM_ESP32S_UNO-psram-cache-issue
+
+ArduCAM_ESP32S_UNO.menu.PartitionScheme.default=Default
+ArduCAM_ESP32S_UNO.menu.PartitionScheme.default.build.partitions=default
+ArduCAM_ESP32S_UNO.menu.PartitionScheme.minimal=Minimal (2MB FLASH)
+ArduCAM_ESP32S_UNO.menu.PartitionScheme.minimal.build.partitions=minimal
+ArduCAM_ESP32S_UNO.menu.PartitionScheme.no_ota=No OTA (Large APP)
+ArduCAM_ESP32S_UNO.menu.PartitionScheme.no_ota.build.partitions=no_ota
+ArduCAM_ESP32S_UNO.menu.PartitionScheme.no_ota.upload.maximum_size=2097152
+ArduCAM_ESP32S_UNO.menu.PartitionScheme.min_spiffs=Minimal SPIFFS (Large APPS with OTA)
+ArduCAM_ESP32S_UNO.menu.PartitionScheme.min_spiffs.build.partitions=min_spiffs
+ArduCAM_ESP32S_UNO.menu.PartitionScheme.min_spiffs.upload.maximum_size=1966080
+
+ArduCAM_ESP32S_UNO.menu.FlashMode.qio=QIO
+ArduCAM_ESP32S_UNO.menu.FlashMode.qio.build.flash_mode=dio
+ArduCAM_ESP32S_UNO.menu.FlashMode.qio.build.boot=qio
+ArduCAM_ESP32S_UNO.menu.FlashMode.dio=DIO
+ArduCAM_ESP32S_UNO.menu.FlashMode.dio.build.flash_mode=dio
+ArduCAM_ESP32S_UNO.menu.FlashMode.dio.build.boot=dio
+ArduCAM_ESP32S_UNO.menu.FlashMode.qout=QOUT
+ArduCAM_ESP32S_UNO.menu.FlashMode.qout.build.flash_mode=dout
+ArduCAM_ESP32S_UNO.menu.FlashMode.qout.build.boot=qout
+ArduCAM_ESP32S_UNO.menu.FlashMode.dout=DOUT
+ArduCAM_ESP32S_UNO.menu.FlashMode.dout.build.flash_mode=dout
+ArduCAM_ESP32S_UNO.menu.FlashMode.dout.build.boot=dout
 
 ArduCAM_ESP32S_UNO.menu.FlashFreq.80=80MHz
 ArduCAM_ESP32S_UNO.menu.FlashFreq.80.build.flash_freq=80m
 ArduCAM_ESP32S_UNO.menu.FlashFreq.40=40MHz
 ArduCAM_ESP32S_UNO.menu.FlashFreq.40.build.flash_freq=40m
+
+ArduCAM_ESP32S_UNO.menu.FlashSize.4M=4MB (32Mb)
+ArduCAM_ESP32S_UNO.menu.FlashSize.4M.build.flash_size=4MB
+ArduCAM_ESP32S_UNO.menu.FlashSize.2M=2MB (16Mb)
+ArduCAM_ESP32S_UNO.menu.FlashSize.2M.build.flash_size=2MB
+ArduCAM_ESP32S_UNO.menu.FlashSize.2M.build.partitions=minimal
 
 ArduCAM_ESP32S_UNO.menu.UploadSpeed.921600=921600
 ArduCAM_ESP32S_UNO.menu.UploadSpeed.921600.upload.speed=921600
@@ -43,3 +86,15 @@ ArduCAM_ESP32S_UNO.menu.UploadSpeed.460800.upload.speed=460800
 ArduCAM_ESP32S_UNO.menu.UploadSpeed.512000.windows=512000
 ArduCAM_ESP32S_UNO.menu.UploadSpeed.512000.upload.speed=512000
 
+ArduCAM_ESP32S_UNO.menu.DebugLevel.none=None
+ArduCAM_ESP32S_UNO.menu.DebugLevel.none.build.code_debug=0
+ArduCAM_ESP32S_UNO.menu.DebugLevel.error=Error
+ArduCAM_ESP32S_UNO.menu.DebugLevel.error.build.code_debug=1
+ArduCAM_ESP32S_UNO.menu.DebugLevel.warn=Warn
+ArduCAM_ESP32S_UNO.menu.DebugLevel.warn.build.code_debug=2
+ArduCAM_ESP32S_UNO.menu.DebugLevel.info=Info
+ArduCAM_ESP32S_UNO.menu.DebugLevel.info.build.code_debug=3
+ArduCAM_ESP32S_UNO.menu.DebugLevel.debug=Debug
+ArduCAM_ESP32S_UNO.menu.DebugLevel.debug.build.code_debug=4
+ArduCAM_ESP32S_UNO.menu.DebugLevel.verbose=Verbose
+ArduCAM_ESP32S_UNO.menu.DebugLevel.verbose.build.code_debug=5

@@ -15,6 +15,9 @@
 #ifndef _SIMPLE_BLE_H_
 #define _SIMPLE_BLE_H_
 
+#include "sdkconfig.h"
+
+#if defined(CONFIG_BT_ENABLED) && defined(CONFIG_BLUEDROID_ENABLED)
 
 #include <cstdint>
 #include <cstdio>
@@ -22,7 +25,7 @@
 #include <cstring>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "bt.h"
+#include "esp_bt.h"
 
 #include "Arduino.h"
 
@@ -52,12 +55,11 @@ class SimpleBLE {
         void end(void);
 
     private:
-        struct ble_gap_adv_params_s * _ble_adv_param;
         String local_name;
-        void _ble_send_adv_param(void);
-        void _ble_send_adv_data(void);
     private:
 
 };
+
+#endif
 
 #endif

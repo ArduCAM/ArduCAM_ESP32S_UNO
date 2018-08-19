@@ -35,10 +35,36 @@
 #include "esp_err.h"
 #include "esp_wifi_types.h"
 #include "esp_event.h"
+#include "esp_wifi.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct {
+    QueueHandle_t handle; /**< FreeRTOS queue handler */
+    void *storage;        /**< storage for FreeRTOS queue */
+} wifi_static_queue_t;
+
+/**
+ * @brief Initialize Wi-Fi Driver
+ *     Alloc resource for WiFi driver, such as WiFi control structure, RX/TX buffer,
+ *     WiFi NVS structure among others.
+ *
+ * For the most part, you need not call this function directly. It gets called
+ * from esp_wifi_init().
+ *
+ * This function may be called, if you only need to initialize the Wi-Fi driver
+ * without having to use the network stack on top.
+ *
+ * @param  config provide WiFi init configuration
+ *
+ * @return
+ *    - ESP_OK: succeed
+ *    - ESP_ERR_NO_MEM: out of memory
+ *    - others: refer to error code esp_err.h
+ */
+esp_err_t esp_wifi_init_internal(const wifi_init_config_t *config);
 
 /**
   * @brief  get whether the wifi driver is allowed to transmit data or not
@@ -61,7 +87,7 @@ void esp_wifi_internal_free_rx_buffer(void* buffer);
   *
   * @param  wifi_interface_t wifi_if : wifi interface id
   * @param  void *buffer : the buffer to be tansmit
-  * @param  u16_t len : the length of buffer
+  * @param  uint16_t len : the length of buffer
   *
   * @return
   *    - ERR_OK  : Successfully transmit the buffer to wifi driver
@@ -69,7 +95,7 @@ void esp_wifi_internal_free_rx_buffer(void* buffer);
   *    - ERR_IF : WiFi driver error
   *    - ERR_ARG : Invalid argument
   */
-int esp_wifi_internal_tx(wifi_interface_t wifi_if, void *buffer, u16_t len);
+int esp_wifi_internal_tx(wifi_interface_t wifi_if, void *buffer, uint16_t len);
 
 /**
   * @brief     The WiFi RX callback function
@@ -100,6 +126,63 @@ esp_err_t esp_wifi_internal_reg_rxcb(wifi_interface_t ifx, wifi_rxcb_t fn);
   *     - others : fail
   */
 esp_err_t esp_wifi_internal_set_sta_ip(void);
+
+/**
+  * @brief     Check the MD5 values of the OS adapter header files in IDF and WiFi library
+  *
+  * @attention 1. It is used for internal CI version check
+  *
+  * @return
+  *     - ESP_OK : succeed
+  *     - ESP_WIFI_INVALID_ARG : MD5 check fail
+  */
+esp_err_t esp_wifi_internal_osi_funcs_md5_check(const char *md5);
+
+/**
+  * @brief     Check the MD5 values of the crypto types header files in IDF and WiFi library
+  *
+  * @attention 1. It is used for internal CI version check
+  *
+  * @return
+  *     - ESP_OK : succeed
+  *     - ESP_WIFI_INVALID_ARG : MD5 check fail
+  */
+esp_err_t esp_wifi_internal_crypto_funcs_md5_check(const char *md5);
+
+/**
+  * @brief     Allocate a chunk of memory for WiFi driver
+  *
+  * @attention This API is not used for DMA memory allocation.
+  *
+  * @param     size_t size : Size, in bytes, of the amount of memory to allocate
+  *
+  * @return    A pointer to the memory allocated on success, NULL on failure
+  */
+void *wifi_malloc( size_t size );
+
+/**
+  * @brief     Reallocate a chunk of memory for WiFi driver
+  *
+  * @attention This API is not used for DMA memory allocation.
+  *
+  * @param     void * ptr  : Pointer to previously allocated memory, or NULL for a new allocation.
+  * @param     size_t size : Size, in bytes, of the amount of memory to allocate
+  *
+  * @return    A pointer to the memory allocated on success, NULL on failure
+  */
+void *wifi_realloc( void *ptr, size_t size );
+
+/**
+  * @brief     Callocate memory for WiFi driver
+  *
+  * @attention This API is not used for DMA memory allocation.
+  *
+  * @param     size_t n    : Number of continuing chunks of memory to allocate
+  * @param     size_t size : Size, in bytes, of the amount of memory to allocate
+  *
+  * @return    A pointer to the memory allocated on success, NULL on failure
+  */
+void *wifi_calloc( size_t n, size_t size );
 
 #ifdef __cplusplus
 }

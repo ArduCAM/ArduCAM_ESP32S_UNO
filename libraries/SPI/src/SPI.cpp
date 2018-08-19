@@ -31,7 +31,7 @@ SPIClass::SPIClass(uint8_t spi_bus)
     ,_ss(-1)
     ,_div(0)
     ,_freq(1000000)
-    , _inTransaction(false)
+    ,_inTransaction(false)
 {}
 
 void SPIClass::begin(int8_t sck, int8_t miso, int8_t mosi, int8_t ss)
@@ -49,10 +49,17 @@ void SPIClass::begin(int8_t sck, int8_t miso, int8_t mosi, int8_t ss)
         return;
     }
 
-    _sck = sck;
-    _miso = miso;
-    _mosi = mosi;
-    _ss = ss;
+    if(sck == -1 && miso == -1 && mosi == -1 && ss == -1) {
+        _sck = (_spi_num == VSPI) ? SCK : 14;
+        _miso = (_spi_num == VSPI) ? MISO : 12;
+        _mosi = (_spi_num == VSPI) ? MOSI : 13;
+        _ss = (_spi_num == VSPI) ? SS : 15;
+    } else {
+        _sck = sck;
+        _miso = miso;
+        _mosi = mosi;
+        _ss = ss;
+    }
 
     spiAttachSCK(_spi, _sck);
     spiAttachMISO(_spi, _miso);
@@ -102,6 +109,11 @@ void SPIClass::setClockDivider(uint32_t clockDiv)
     spiSetClockDiv(_spi, _div);
 }
 
+uint32_t SPIClass::getClockDivider()
+{
+    return spiGetClockDiv(_spi);
+}
+
 void SPIClass::setDataMode(uint8_t dataMode)
 {
     spiSetDataMode(_spi, dataMode);
@@ -127,8 +139,8 @@ void SPIClass::beginTransaction(SPISettings settings)
 void SPIClass::endTransaction()
 {
     if(_inTransaction){
-        spiEndTransaction(_spi);
         _inTransaction = false;
+        spiEndTransaction(_spi);
     }
 }
 
@@ -242,11 +254,12 @@ void SPIClass::writePattern(uint8_t * data, uint8_t size, uint32_t repeat)
 
     uint32_t byte = (size * repeat);
     uint8_t r = (64 / size);
+    const uint8_t max_bytes_FIFO = r * size;    // Max number of whole patterns (in bytes) that can fit into the hardware FIFO
 
     while(byte) {
-        if(byte > 64) {
+        if(byte > max_bytes_FIFO) {
             writePattern_(data, size, r);
-            byte -= 64;
+            byte -= max_bytes_FIFO;
         } else {
             writePattern_(data, size, (byte / size));
             byte = 0;

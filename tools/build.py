@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# build.py â€?build a sketch using arduino-builder
+# build.py â€” build a sketch using arduino-builder
 #
 # Wrapper script around arduino-builder which accepts some ESP8266-specific
 # options and translates them into FQBN
@@ -44,7 +44,7 @@ def compile(tmp_dir, sketch, tools_dir, hardware_dir, ide_path, f, args):
     else:
         cmd += '-hardware "' + hardware_dir + '" '
     # Debug=Serial,DebugLevel=Core____
-    cmd += '-fqbn=espressif:ArduCAM_ESP32S_UNO:{board_name}:' \
+    cmd += '-fqbn=espressif:esp32:{board_name}:' \
             'FlashFreq={flash_freq},' \
             'UploadSpeed=921600'.format(**vars(args))
     cmd += ' '

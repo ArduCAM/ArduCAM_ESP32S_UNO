@@ -11,7 +11,7 @@ SECTIONS
     . = ALIGN(4);
     *(.rtc.literal .rtc.text)
     *rtc_wake_stub*.o(.literal .text .literal.* .text.*)
-  } >rtc_iram_seg
+  } > rtc_iram_seg
 
   /* RTC slow memory holds RTC wake stub
      data/rodata, including from any source file
@@ -33,6 +33,20 @@ SECTIONS
     *rtc_wake_stub*.o(.bss .bss.*)
     *rtc_wake_stub*.o(COMMON)
     _rtc_bss_end = ABSOLUTE(.);
+  } > rtc_slow_seg
+
+  /* This section holds data that should not be initialized at power up 
+     and will be retained during deep sleep. The section located in 
+     RTC SLOW Memory area. User data marked with RTC_NOINIT_ATTR will be placed
+     into this section. See the file "esp_attr.h" for more information.
+  */
+  .rtc_noinit (NOLOAD):
+  {
+    . = ALIGN(4);
+    _rtc_noinit_start = ABSOLUTE(.);
+    *(.rtc_noinit .rtc_noinit.*)
+    . = ALIGN(4) ;
+    _rtc_noinit_end = ABSOLUTE(.);
   } > rtc_slow_seg
 
   /* Send .iram0 code to iram */
@@ -71,6 +85,10 @@ SECTIONS
     *(.init.literal)
     *(.init)
     _init_end = ABSOLUTE(.);
+
+    /* This goes here, not at top of linker script, so addr2line finds it last,
+       and uses it in preference to the first symbol in IRAM */
+    _iram_start = ABSOLUTE(0);
   } > iram0_0_seg
 
   .iram0.text :
@@ -79,40 +97,62 @@ SECTIONS
     _iram_text_start = ABSOLUTE(.);
     *(.iram1 .iram1.*)
     *libfreertos.a:(.literal .text .literal.* .text.*)
+    *libheap.a:multi_heap.o(.literal .text .literal.* .text.*)
+    *libheap.a:multi_heap_poisoning.o(.literal .text .literal.* .text.*)
     *libesp32.a:panic.o(.literal .text .literal.* .text.*)
     *libesp32.a:core_dump.o(.literal .text .literal.* .text.*)
-    *libphy.a:(.literal .text .literal.* .text.*)
+    *libapp_trace.a:(.literal .text .literal.* .text.*)
+    *libxtensa-debug-module.a:eri.o(.literal .text .literal.* .text.*)
     *librtc.a:(.literal .text .literal.* .text.*)
-    *librtc_clk.a:(.literal .text .literal.* .text.*)
-    *libpp.a:pp.o(.literal .text .literal.* .text.*)
-    *libpp.a:lmac.o(.literal .text .literal.* .text.*)
-    *libpp.a:wdev.o(.literal .text .literal.* .text.*)
-    *libcore.a:ets_timer.o(.literal .text .literal.* .text.*)
-    *libnet80211.a:ieee80211_misc.o(.literal .text .literal.* .text.*)
+    *libsoc.a:(.literal .text .literal.* .text.*)
     *libhal.a:(.literal .text .literal.* .text.*)
-    *libcoexist.a:(.literal .text .literal.* .text.*)
+    *libgcc.a:lib2funcs.o(.literal .text .literal.* .text.*)
+    *libspi_flash.a:spi_flash_rom_patch.o(.literal .text .literal.* .text.*)
+    *libgcov.a:(.literal .text .literal.* .text.*)
+    INCLUDE esp32.spiram.rom-functions-iram.ld
     _iram_text_end = ABSOLUTE(.);
   } > iram0_0_seg
-
+  
   .dram0.data :
   {
     _data_start = ABSOLUTE(.);
-    KEEP(*(.data))
-    KEEP(*(.data.*))
-    KEEP(*(.gnu.linkonce.d.*))
-    KEEP(*(.data1))
-    KEEP(*(.sdata))
-    KEEP(*(.sdata.*))
-    KEEP(*(.gnu.linkonce.s.*))
-    KEEP(*(.sdata2))
-    KEEP(*(.sdata2.*))
-    KEEP(*(.gnu.linkonce.s2.*))
-    KEEP(*(.jcr))
+    *(.data)
+    *(.data.*)
+    *(.gnu.linkonce.d.*)
+    *(.data1)
+    *(.sdata)
+    *(.sdata.*)
+    *(.gnu.linkonce.s.*)
+    *(.sdata2)
+    *(.sdata2.*)
+    *(.gnu.linkonce.s2.*)
+    *(.jcr)
     *(.dram1 .dram1.*)
     *libesp32.a:panic.o(.rodata .rodata.*)
+    *libphy.a:(.rodata .rodata.*)
+    *libsoc.a:rtc_clk.o(.rodata .rodata.*)
+    *libapp_trace.a:(.rodata .rodata.*)
+    *libgcov.a:(.rodata .rodata.*)
+    *libheap.a:multi_heap.o(.rodata .rodata.*)
+    *libheap.a:multi_heap_poisoning.o(.rodata .rodata.*)
+    INCLUDE esp32.spiram.rom-functions-dram.ld
     _data_end = ABSOLUTE(.);
     . = ALIGN(4);
-  } >dram0_0_seg
+  } > dram0_0_seg
+
+  /*This section holds data that should not be initialized at power up.
+    The section located in Internal SRAM memory region. The macro _NOINIT
+    can be used as attribute to place data into this section.
+    See the esp_attr.h file for more information.
+  */
+  .noinit (NOLOAD):
+  {
+    . = ALIGN(4);
+    _noinit_start = ABSOLUTE(.);
+    *(.noinit .noinit.*) 
+    . = ALIGN(4) ;
+    _noinit_end = ABSOLUTE(.);
+  } > dram0_0_seg
 
   /* Shared RAM */
   .dram0.bss (NOLOAD) :
@@ -135,8 +175,9 @@ SECTIONS
     *(COMMON)
     . = ALIGN (8);
     _bss_end = ABSOLUTE(.);
+    /* The heap starts right after end of this section */
     _heap_start = ABSOLUTE(.);
-  } >dram0_0_seg
+  } > dram0_0_seg
 
   .flash.rodata :
   {
@@ -148,11 +189,13 @@ SECTIONS
     *(.rodata1)
     __XT_EXCEPTION_TABLE_ = ABSOLUTE(.);
     *(.xt_except_table)
-    *(.gcc_except_table)
+    *(.gcc_except_table .gcc_except_table.*)
     *(.gnu.linkonce.e.*)
     *(.gnu.version_r)
-    *(.eh_frame)
     . = (. + 3) & ~ 3;
+    __eh_frame = ABSOLUTE(.);
+    KEEP(*(.eh_frame))
+    . = (. + 7) & ~ 3;
     /*  C++ constructor and destructor tables, properly ordered:  */
     __init_array_start = ABSOLUTE(.);
     KEEP (*crtbegin.o(.ctors))
@@ -180,6 +223,13 @@ SECTIONS
     *(.gnu.linkonce.lit4.*)
     _lit4_end = ABSOLUTE(.);
     . = ALIGN(4);
+    _thread_local_start = ABSOLUTE(.);
+    *(.tdata)
+    *(.tdata.*)
+    *(.tbss)
+    *(.tbss.*)
+    _thread_local_end = ABSOLUTE(.);
+    . = ALIGN(4);
   } >drom0_0_seg
 
   .flash.text :
@@ -193,5 +243,11 @@ SECTIONS
     *(.gnu.version)
     _text_end = ABSOLUTE(.);
     _etext = .;
+
+    /* Similar to _iram_start, this symbol goes here so it is
+       resolved by addr2line in preference to the first symbol in
+       the flash.text segment.
+    */
+    _flash_cache_start = ABSOLUTE(0);
   } >iram0_2_seg
 }

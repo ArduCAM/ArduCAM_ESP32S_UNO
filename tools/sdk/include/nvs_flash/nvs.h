@@ -31,17 +31,21 @@ typedef uint32_t nvs_handle;
 #define ESP_ERR_NVS_BASE                0x1100                     /*!< Starting number of error codes */
 #define ESP_ERR_NVS_NOT_INITIALIZED     (ESP_ERR_NVS_BASE + 0x01)  /*!< The storage driver is not initialized */
 #define ESP_ERR_NVS_NOT_FOUND           (ESP_ERR_NVS_BASE + 0x02)  /*!< Id namespace doesn’t exist yet and mode is NVS_READONLY */
-#define ESP_ERR_NVS_TYPE_MISMATCH       (ESP_ERR_NVS_BASE + 0x03)  /*!< TBA */
+#define ESP_ERR_NVS_TYPE_MISMATCH       (ESP_ERR_NVS_BASE + 0x03)  /*!< The type of set or get operation doesn't match the type of value stored in NVS */
 #define ESP_ERR_NVS_READ_ONLY           (ESP_ERR_NVS_BASE + 0x04)  /*!< Storage handle was opened as read only */
 #define ESP_ERR_NVS_NOT_ENOUGH_SPACE    (ESP_ERR_NVS_BASE + 0x05)  /*!< There is not enough space in the underlying storage to save the value */
 #define ESP_ERR_NVS_INVALID_NAME        (ESP_ERR_NVS_BASE + 0x06)  /*!< Namespace name doesn’t satisfy constraints */
 #define ESP_ERR_NVS_INVALID_HANDLE      (ESP_ERR_NVS_BASE + 0x07)  /*!< Handle has been closed or is NULL */
 #define ESP_ERR_NVS_REMOVE_FAILED       (ESP_ERR_NVS_BASE + 0x08)  /*!< The value wasn’t updated because flash write operation has failed. The value was written however, and update will be finished after re-initialization of nvs, provided that flash operation doesn’t fail again. */
-#define ESP_ERR_NVS_KEY_TOO_LONG        (ESP_ERR_NVS_BASE + 0x09)  /*!< TBA */
-#define ESP_ERR_NVS_PAGE_FULL           (ESP_ERR_NVS_BASE + 0x0a)  /*!< TBA */
-#define ESP_ERR_NVS_INVALID_STATE       (ESP_ERR_NVS_BASE + 0x0b)  /*!< TBA */
-#define ESP_ERR_NVS_INVALID_LENGTH      (ESP_ERR_NVS_BASE + 0x0c)  /*!< TBA */
+#define ESP_ERR_NVS_KEY_TOO_LONG        (ESP_ERR_NVS_BASE + 0x09)  /*!< Key name is too long */
+#define ESP_ERR_NVS_PAGE_FULL           (ESP_ERR_NVS_BASE + 0x0a)  /*!< Internal error; never returned by nvs API functions */
+#define ESP_ERR_NVS_INVALID_STATE       (ESP_ERR_NVS_BASE + 0x0b)  /*!< NVS is in an inconsistent state due to a previous error. Call nvs_flash_init and nvs_open again, then retry. */
+#define ESP_ERR_NVS_INVALID_LENGTH      (ESP_ERR_NVS_BASE + 0x0c)  /*!< String or blob length is not sufficient to store data */
+#define ESP_ERR_NVS_NO_FREE_PAGES       (ESP_ERR_NVS_BASE + 0x0d)  /*!< NVS partition doesn't contain any empty pages. This may happen if NVS partition was truncated. Erase the whole partition and call nvs_flash_init again. */
+#define ESP_ERR_NVS_VALUE_TOO_LONG      (ESP_ERR_NVS_BASE + 0x0e)  /*!< String or blob length is longer than supported by the implementation */
+#define ESP_ERR_NVS_PART_NOT_FOUND      (ESP_ERR_NVS_BASE + 0x0f)  /*!< Partition with specified name is not found in the partition table */
 
+#define NVS_DEFAULT_PART_NAME           "nvs"   /*!< Default partition name of the NVS partition in the partition table */
 /**
  * @brief Mode of opening the non-volatile storage
  *
@@ -52,15 +56,45 @@ typedef enum {
 } nvs_open_mode;
 
 /**
- * @brief      Open non-volatile storage with a given namespace
+ * @brief      Open non-volatile storage with a given namespace from the default NVS partition
  *
  * Multiple internal ESP-IDF and third party application modules can store
  * their key-value pairs in the NVS module. In order to reduce possible
  * conflicts on key names, each module can use its own namespace.
+ * The default NVS partition is the one that is labelled "nvs" in the partition
+ * table.
  *
  * @param[in]  name        Namespace name. Maximal length is determined by the
  *                         underlying implementation, but is guaranteed to be
- *                         at least 16 characters. Shouldn't be empty.
+ *                         at least 15 characters. Shouldn't be empty.
+ * @param[in]  open_mode   NVS_READWRITE or NVS_READONLY. If NVS_READONLY, will
+ *                         open a handle for reading only. All write requests will
+ *			   be rejected for this handle.
+ * @param[out] out_handle  If successful (return code is zero), handle will be
+ *                         returned in this argument.
+ *
+ * @return
+ *             - ESP_OK if storage handle was opened successfully
+ *             - ESP_ERR_NVS_NOT_INITIALIZED if the storage driver is not initialized
+ *             - ESP_ERR_NVS_PART_NOT_FOUND if the partition with label "nvs" is not found
+ *             - ESP_ERR_NVS_NOT_FOUND id namespace doesn't exist yet and
+ *               mode is NVS_READONLY
+ *             - ESP_ERR_NVS_INVALID_NAME if namespace name doesn't satisfy constraints
+ *             - other error codes from the underlying storage driver
+ */
+esp_err_t nvs_open(const char* name, nvs_open_mode open_mode, nvs_handle *out_handle);
+
+/**
+ * @brief      Open non-volatile storage with a given namespace from specified partition
+ *
+ * The behaviour is same as nvs_open() API. However this API can operate on a specified NVS
+ * partition instead of default NVS partition. Note that the specified partition must be registered
+ * with NVS using nvs_flash_init_partition() API.
+ *
+ * @param[in]  part_name   Label (name) of the partition of interest for object read/write/erase
+ * @param[in]  name        Namespace name. Maximal length is determined by the
+ *                         underlying implementation, but is guaranteed to be
+ *                         at least 15 characters. Shouldn't be empty.
  * @param[in]  open_mode   NVS_READWRITE or NVS_READONLY. If NVS_READONLY, will 
  *                         open a handle for reading only. All write requests will 
  *			   be rejected for this handle.
@@ -70,12 +104,13 @@ typedef enum {
  * @return
  *             - ESP_OK if storage handle was opened successfully
  *             - ESP_ERR_NVS_NOT_INITIALIZED if the storage driver is not initialized
+ *             - ESP_ERR_NVS_PART_NOT_FOUND if the partition with specified name is not found
  *             - ESP_ERR_NVS_NOT_FOUND id namespace doesn't exist yet and
  *               mode is NVS_READONLY
  *             - ESP_ERR_NVS_INVALID_NAME if namespace name doesn't satisfy constraints
  *             - other error codes from the underlying storage driver
  */
-esp_err_t nvs_open(const char* name, nvs_open_mode open_mode, nvs_handle *out_handle);
+esp_err_t nvs_open_from_partition(const char *part_name, const char* name, nvs_open_mode open_mode, nvs_handle *out_handle);
 
 /**@{*/
 /**
@@ -88,8 +123,10 @@ esp_err_t nvs_open(const char* name, nvs_open_mode open_mode, nvs_handle *out_ha
  *                     Handles that were opened read only cannot be used.
  * @param[in]  key     Key name. Maximal length is determined by the underlying
  *                     implementation, but is guaranteed to be at least
- *                     16 characters. Shouldn't be empty.
+ *                     15 characters. Shouldn't be empty.
  * @param[in]  value   The value to set.
+ *                     For strings, the maximum length (including null character) is
+ *                     1984 bytes.
  *
  * @return
  *             - ESP_OK if value was set successfully
@@ -102,6 +139,7 @@ esp_err_t nvs_open(const char* name, nvs_open_mode open_mode, nvs_handle *out_ha
  *               write operation has failed. The value was written however, and
  *               update will be finished after re-initialization of nvs, provided that
  *               flash operation doesn't fail again.
+ *             - ESP_ERR_NVS_VALUE_TOO_LONG if the string value is too long
  */
 esp_err_t nvs_set_i8  (nvs_handle handle, const char* key, int8_t value);
 esp_err_t nvs_set_u8  (nvs_handle handle, const char* key, uint8_t value);
@@ -122,11 +160,10 @@ esp_err_t nvs_set_str (nvs_handle handle, const char* key, const char* value);
  *
  * @param[in]  handle  Handle obtained from nvs_open function.
  *                     Handles that were opened read only cannot be used.
- * @param[in]  key     Key name. Maximal length is determined by the underlying
- *                     implementation, but is guaranteed to be at least
- *                     16 characters. Shouldn't be empty.
+ * @param[in]  key     Key name. Maximal length is 15 characters. Shouldn't be empty.
  * @param[in]  value   The value to set.
- * @param[in]  length  length of binary value to set, in bytes.
+ * @param[in]  length  length of binary value to set, in bytes; Maximum length is
+ *                     1984 bytes.
  *
  * @return
  *             - ESP_OK if value was set successfully
@@ -139,6 +176,7 @@ esp_err_t nvs_set_str (nvs_handle handle, const char* key, const char* value);
  *               write operation has failed. The value was written however, and
  *               update will be finished after re-initialization of nvs, provided that
  *               flash operation doesn't fail again.
+ *             - ESP_ERR_NVS_VALUE_TOO_LONG if the value is too long
  */
 esp_err_t nvs_set_blob(nvs_handle handle, const char* key, const void* value, size_t length);
 
@@ -168,7 +206,7 @@ esp_err_t nvs_set_blob(nvs_handle handle, const char* key, const void* value, si
  * @param[in]     handle     Handle obtained from nvs_open function.
  * @param[in]     key        Key name. Maximal length is determined by the underlying
  *                           implementation, but is guaranteed to be at least
- *                           16 characters. Shouldn't be empty.
+ *                           15 characters. Shouldn't be empty.
  * @param         out_value  Pointer to the output value.
  *                           May be NULL for nvs_get_str and nvs_get_blob, in this
  *                           case required length will be returned in length argument.
@@ -229,7 +267,7 @@ esp_err_t nvs_get_u64 (nvs_handle handle, const char* key, uint64_t* out_value);
  * @param[in]     handle     Handle obtained from nvs_open function.
  * @param[in]     key        Key name. Maximal length is determined by the underlying
  *                           implementation, but is guaranteed to be at least
- *                           16 characters. Shouldn't be empty.
+ *                           15 characters. Shouldn't be empty.
  * @param         out_value  Pointer to the output value.
  *                           May be NULL for nvs_get_str and nvs_get_blob, in this
  *                           case required length will be returned in length argument.
@@ -261,7 +299,7 @@ esp_err_t nvs_get_blob(nvs_handle handle, const char* key, void* out_value, size
  *
  * @param[in]  key     Key name. Maximal length is determined by the underlying
  *                     implementation, but is guaranteed to be at least
- *                     16 characters. Shouldn't be empty.
+ *                     15 characters. Shouldn't be empty.
  *
  * @return
  *              - ESP_OK if erase operation was successful
@@ -318,6 +356,88 @@ esp_err_t nvs_commit(nvs_handle handle);
  */
 void nvs_close(nvs_handle handle);
 
+/**
+ * @note Info about storage space NVS.
+ */
+typedef struct {
+    size_t used_entries;      /**< Amount of used entries. */
+    size_t free_entries;      /**< Amount of free entries. */
+    size_t total_entries;     /**< Amount all available entries. */
+    size_t namespace_count;   /**< Amount name space. */
+} nvs_stats_t;
+
+/**
+ * @brief      Fill structure nvs_stats_t. It provides info about used memory the partition.
+ *
+ * This function calculates to runtime the number of used entries, free entries, total entries,
+ * and amount namespace in partition.
+ *
+ * \code{c}
+ * // Example of nvs_get_stats() to get the number of used entries and free entries:
+ * nvs_stats_t nvs_stats;
+ * nvs_get_stats(NULL, &nvs_stats);
+ * printf("Count: UsedEntries = (%d), FreeEntries = (%d), AllEntries = (%d)\n",
+          nvs_stats.used_entries, nvs_stats.free_entries, nvs_stats.total_entries);
+ * \endcode
+ *
+ * @param[in]   part_name   Partition name NVS in the partition table.
+ *                          If pass a NULL than will use NVS_DEFAULT_PART_NAME ("nvs").
+ *
+ * @param[out]  nvs_stats   Returns filled structure nvs_states_t.
+ *                          It provides info about used memory the partition.
+ *
+ *
+ * @return
+ *             - ESP_OK if the changes have been written successfully.
+ *               Return param nvs_stats will be filled.
+ *             - ESP_ERR_NVS_PART_NOT_FOUND if the partition with label "name" is not found.
+ *               Return param nvs_stats will be filled 0.
+ *             - ESP_ERR_NVS_NOT_INITIALIZED if the storage driver is not initialized.
+ *               Return param nvs_stats will be filled 0.
+ *             - ESP_ERR_INVALID_ARG if nvs_stats equal to NULL.
+ *             - ESP_ERR_INVALID_STATE if there is page with the status of INVALID.
+ *               Return param nvs_stats will be filled not with correct values because
+ *               not all pages will be counted. Counting will be interrupted at the first INVALID page.
+ */
+esp_err_t nvs_get_stats(const char* part_name, nvs_stats_t* nvs_stats);
+
+/**
+ * @brief      Calculate all entries in a namespace.
+ *
+ * Note that to find out the total number of records occupied by the namespace,
+ * add one to the returned value used_entries (if err is equal to ESP_OK).
+ * Because the name space entry takes one entry.
+ *
+ * \code{c}
+ * // Example of nvs_get_used_entry_count() to get amount of all key-value pairs in one namespace:
+ * nvs_handle handle;
+ * nvs_open("namespace1", NVS_READWRITE, &handle);
+ * ...
+ * size_t used_entries;
+ * size_t total_entries_namespace;
+ * if(nvs_get_used_entry_count(handle, &used_entries) == ESP_OK){
+ *     // the total number of records occupied by the namespace
+ *     total_entries_namespace = used_entries + 1;
+ * }
+ * \endcode
+ *
+ * @param[in]   handle              Handle obtained from nvs_open function.
+ *
+ * @param[out]  used_entries        Returns amount of used entries from a namespace.
+ *
+ *
+ * @return
+ *             - ESP_OK if the changes have been written successfully.
+ *               Return param used_entries will be filled valid value.
+ *             - ESP_ERR_NVS_NOT_INITIALIZED if the storage driver is not initialized.
+ *               Return param used_entries will be filled 0.
+ *             - ESP_ERR_NVS_INVALID_HANDLE if handle has been closed or is NULL.
+ *               Return param used_entries will be filled 0.
+ *             - ESP_ERR_INVALID_ARG if nvs_stats equal to NULL.
+ *             - Other error codes from the underlying storage driver.
+ *               Return param used_entries will be filled 0.
+ */
+esp_err_t nvs_get_used_entry_count(nvs_handle handle, size_t* used_entries);
 
 #ifdef __cplusplus
 } // extern "C"

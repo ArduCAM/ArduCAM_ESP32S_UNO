@@ -24,12 +24,12 @@
 #ifndef  SMP_INT_H
 #define  SMP_INT_H
 
-#if BLE_INCLUDED == TRUE
+#if (BLE_INCLUDED == TRUE && SMP_INCLUDED == TRUE)
 
-#include "btu.h"
-#include "btm_ble_api.h"
-#include "btm_api.h"
-#include "smp_api.h"
+#include "stack/btu.h"
+#include "stack/btm_ble_api.h"
+#include "stack/btm_api.h"
+#include "stack/smp_api.h"
 
 #define SMP_MODEL_ENCRYPTION_ONLY  0   /* Legacy mode, Just Works model */
 #define SMP_MODEL_PASSKEY       1   /* Legacy mode, Passkey Entry model, this side inputs the key */
@@ -530,6 +530,6 @@ extern BOOLEAN aes_cipher_msg_auth_code(BT_OCTET16 key, UINT8 *input, UINT16 len
                                         UINT16 tlen, UINT8 *p_signature);
 extern void print128(BT_OCTET16 x, const UINT8 *key_name);
 
-#endif
+#endif  ///BLE_INCLUDED == TRUE && SMP_INCLUDED == TRUE
 
 #endif /* SMP_INT_H */

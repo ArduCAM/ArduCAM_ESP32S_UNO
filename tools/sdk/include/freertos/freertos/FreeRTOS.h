@@ -189,11 +189,7 @@ extern "C" {
 #endif
 
 #ifndef INCLUDE_pcTaskGetTaskName
-#if ( configENABLE_MEMORY_DEBUG == 1)
 	#define INCLUDE_pcTaskGetTaskName 1
-#else
-	#define INCLUDE_pcTaskGetTaskName 0
-#endif
 #endif
 
 #ifndef configUSE_APPLICATION_TASK_TAG
@@ -202,6 +198,10 @@ extern "C" {
 
 #ifndef INCLUDE_uxTaskGetStackHighWaterMark
 	#define INCLUDE_uxTaskGetStackHighWaterMark 0
+#endif
+
+#ifndef INCLUDE_pxTaskGetStackStart
+	#define INCLUDE_pxTaskGetStackStart 0
 #endif
 
 #ifndef INCLUDE_eTaskGetState
@@ -404,6 +404,22 @@ extern "C" {
 
 #ifndef traceMOVED_TASK_TO_READY_STATE
 	#define traceMOVED_TASK_TO_READY_STATE( pxTCB )
+#endif
+
+#ifndef traceREADDED_TASK_TO_READY_STATE
+	#define traceREADDED_TASK_TO_READY_STATE( pxTCB )	traceMOVED_TASK_TO_READY_STATE( pxTCB )
+#endif
+
+#ifndef traceMOVED_TASK_TO_DELAYED_LIST
+	#define traceMOVED_TASK_TO_DELAYED_LIST()
+#endif
+
+#ifndef traceMOVED_TASK_TO_OVERFLOW_DELAYED_LIST
+	#define traceMOVED_TASK_TO_OVERFLOW_DELAYED_LIST()
+#endif
+
+#ifndef traceMOVED_TASK_TO_SUSPENDED_LIST
+	#define traceMOVED_TASK_TO_SUSPENDED_LIST( pxTCB )
 #endif
 
 #ifndef traceQUEUE_CREATE
@@ -616,6 +632,22 @@ extern "C" {
 
 #ifndef traceQUEUE_REGISTRY_ADD
 	#define traceQUEUE_REGISTRY_ADD(xQueue, pcQueueName)
+#endif
+
+#ifndef traceTASK_NOTIFY_GIVE_FROM_ISR
+ 	#define traceTASK_NOTIFY_GIVE_FROM_ISR()
+ #endif
+ 
+#ifndef traceISR_EXIT_TO_SCHEDULER
+	#define traceISR_EXIT_TO_SCHEDULER()
+#endif
+
+#ifndef traceISR_EXIT
+	#define traceISR_EXIT()
+#endif
+
+#ifndef traceISR_ENTER
+	#define traceISR_ENTER(_n_)
 #endif
 
 #ifndef configGENERATE_RUN_TIME_STATS
@@ -942,16 +974,72 @@ typedef struct xSTATIC_QUEUE
 		uint8_t ucDummy9;
 	#endif
 
-    struct {
-	    volatile uint32_t ucDummy10;
-    #ifdef CONFIG_FREERTOS_PORTMUX_DEBUG
-	    void *pvDummy8;
-	    UBaseType_t uxDummy11;
-    #endif
-    } sDummy12;
+	portMUX_TYPE muxDummy;		//Mutex required due to SMP
 
 } StaticQueue_t;
 typedef StaticQueue_t StaticSemaphore_t;
+
+/*
+ * In line with software engineering best practice, especially when supplying a
+ * library that is likely to change in future versions, FreeRTOS implements a
+ * strict data hiding policy.  This means the event group structure used
+ * internally by FreeRTOS is not accessible to application code.  However, if
+ * the application writer wants to statically allocate the memory required to
+ * create an event group then the size of the event group object needs to be
+ * know.  The StaticEventGroup_t structure below is provided for this purpose.
+ * Its sizes and alignment requirements are guaranteed to match those of the
+ * genuine structure, no matter which architecture is being used, and no matter
+ * how the values in FreeRTOSConfig.h are set.  Its contents are somewhat
+ * obfuscated in the hope users will recognise that it would be unwise to make
+ * direct use of the structure members.
+ */
+typedef struct xSTATIC_EVENT_GROUP
+{
+	TickType_t xDummy1;
+	StaticList_t xDummy2;
+
+	#if( configUSE_TRACE_FACILITY == 1 )
+		UBaseType_t uxDummy3;
+	#endif
+
+	#if( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
+			uint8_t ucDummy4;
+	#endif
+
+	portMUX_TYPE muxDummy;		//Mutex required due to SMP
+
+} StaticEventGroup_t;
+
+/*
+ * In line with software engineering best practice, especially when supplying a
+ * library that is likely to change in future versions, FreeRTOS implements a
+ * strict data hiding policy.  This means the software timer structure used
+ * internally by FreeRTOS is not accessible to application code.  However, if
+ * the application writer wants to statically allocate the memory required to
+ * create a software timer then the size of the queue object needs to be know.
+ * The StaticTimer_t structure below is provided for this purpose.  Its sizes
+ * and alignment requirements are guaranteed to match those of the genuine
+ * structure, no matter which architecture is being used, and no matter how the
+ * values in FreeRTOSConfig.h are set.  Its contents are somewhat obfuscated in
+ * the hope users will recognise that it would be unwise to make direct use of
+ * the structure members.
+ */
+typedef struct xSTATIC_TIMER
+{
+	void				*pvDummy1;
+	StaticListItem_t	xDummy2;
+	TickType_t			xDummy3;
+	UBaseType_t			uxDummy4;
+	void 				*pvDummy5[ 2 ];
+	#if( configUSE_TRACE_FACILITY == 1 )
+		UBaseType_t		uxDummy6;
+	#endif
+
+	#if( ( configSUPPORT_STATIC_ALLOCATION == 1 ) && ( configSUPPORT_DYNAMIC_ALLOCATION == 1 ) )
+		uint8_t 		ucDummy7;
+	#endif
+
+} StaticTimer_t;
 
 #ifdef __cplusplus
 }

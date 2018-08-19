@@ -2,7 +2,8 @@
  * \file entropy_poll.h
  *
  * \brief Platform-specific and custom entropy polling functions
- *
+ */
+/*
  *  Copyright (C) 2006-2016, ARM Limited, All Rights Reserved
  *  SPDX-License-Identifier: Apache-2.0
  *
@@ -41,7 +42,9 @@ extern "C" {
 #define MBEDTLS_ENTROPY_MIN_PLATFORM     32     /**< Minimum for platform source    */
 #define MBEDTLS_ENTROPY_MIN_HAVEGE       32     /**< Minimum for HAVEGE             */
 #define MBEDTLS_ENTROPY_MIN_HARDCLOCK     4     /**< Minimum for mbedtls_timing_hardclock()        */
+#if !defined(MBEDTLS_ENTROPY_MIN_HARDWARE)
 #define MBEDTLS_ENTROPY_MIN_HARDWARE     32     /**< Minimum for the hardware source */
+#endif
 
 /**
  * \brief           Entropy poll callback that provides 0 entropy.

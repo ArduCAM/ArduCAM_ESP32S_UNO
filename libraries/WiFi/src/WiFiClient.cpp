@@ -18,17 +18,130 @@
 */
 
 #include "WiFiClient.h"
+#include "WiFi.h"
 #include <lwip/sockets.h>
 #include <lwip/netdb.h>
 #include <errno.h>
 
 #define WIFI_CLIENT_MAX_WRITE_RETRY   (10)
-#define WIFI_CLIENT_SELECT_TIMEOUT_US (100000)
+#define WIFI_CLIENT_SELECT_TIMEOUT_US (1000000)
 #define WIFI_CLIENT_FLUSH_BUFFER_SIZE (1024)
 
 #undef connect
 #undef write
 #undef read
+
+class WiFiClientRxBuffer {
+private:
+        size_t _size;
+        uint8_t *_buffer;
+        size_t _pos;
+        size_t _fill;
+        int _fd;
+        bool _failed;
+
+        size_t r_available()
+        {
+            if(_fd < 0){
+                return 0;
+            }
+            int count;
+            int res = lwip_ioctl_r(_fd, FIONREAD, &count);
+            if(res < 0) {
+                _failed = true;
+                return 0;
+            }
+            return count;
+        }
+
+        size_t fillBuffer()
+        {
+            if(!_buffer){
+                _buffer = (uint8_t *)malloc(_size);
+            }
+            if(_fill && _pos == _fill){
+                _fill = 0;
+                _pos = 0;
+            }
+            if(!_buffer || _size <= _fill || !r_available()) {
+                return 0;
+            }
+            int res = recv(_fd, _buffer + _fill, _size - _fill, MSG_DONTWAIT);
+            if(res < 0 && errno != EWOULDBLOCK) {
+                _failed = true;
+                return 0;
+            }
+            _fill += res;
+            return res;
+        }
+
+public:
+    WiFiClientRxBuffer(int fd, size_t size=1436)
+        :_size(size)
+        ,_buffer(NULL)
+        ,_pos(0)
+        ,_fill(0)
+        ,_fd(fd)
+        ,_failed(false)
+    {
+        //_buffer = (uint8_t *)malloc(_size);
+    }
+
+    ~WiFiClientRxBuffer()
+    {
+        free(_buffer);
+    }
+
+    bool failed(){
+        return _failed;
+    }
+
+    int read(uint8_t * dst, size_t len){
+        if(!dst || !len || (_pos == _fill && !fillBuffer())){
+            return -1;
+        }
+        size_t a = _fill - _pos;
+        if(len <= a || ((len - a) <= (_size - _fill) && fillBuffer() >= (len - a))){
+            if(len == 1){
+                *dst = _buffer[_pos];
+            } else {
+                memcpy(dst, _buffer + _pos, len);
+            }
+            _pos += len;
+            return len;
+        }
+        size_t left = len;
+        size_t toRead = a;
+        uint8_t * buf = dst;
+        memcpy(buf, _buffer + _pos, toRead);
+        _pos += toRead;
+        left -= toRead;
+        buf += toRead;
+        while(left){
+            if(!fillBuffer()){
+                return len - left;
+            }
+            a = _fill - _pos;
+            toRead = (a > left)?left:a;
+            memcpy(buf, _buffer + _pos, toRead);
+            _pos += toRead;
+            left -= toRead;
+            buf += toRead;
+        }
+        return len;
+    }
+
+    int peek(){
+        if(_pos == _fill && !fillBuffer()){
+            return -1;
+        }
+        return _buffer[_pos];
+    }
+
+    size_t available(){
+        return _fill - _pos + r_available();
+    }
+};
 
 class WiFiClientSocketHandle {
 private:
@@ -57,6 +170,7 @@ WiFiClient::WiFiClient():_connected(false),next(NULL)
 WiFiClient::WiFiClient(int fd):_connected(true),next(NULL)
 {
     clientSocketHandle.reset(new WiFiClientSocketHandle(fd));
+    _rxBuffer.reset(new WiFiClientRxBuffer(fd));
 }
 
 WiFiClient::~WiFiClient()
@@ -68,6 +182,7 @@ WiFiClient & WiFiClient::operator=(const WiFiClient &other)
 {
     stop();
     clientSocketHandle = other.clientSocketHandle;
+    _rxBuffer = other._rxBuffer;
     _connected = other._connected;
     return *this;
 }
@@ -75,6 +190,7 @@ WiFiClient & WiFiClient::operator=(const WiFiClient &other)
 void WiFiClient::stop()
 {
     clientSocketHandle = NULL;
+    _rxBuffer = NULL;
     _connected = false;
 }
 
@@ -99,18 +215,17 @@ int WiFiClient::connect(IPAddress ip, uint16_t port)
         return 0;
     }
     clientSocketHandle.reset(new WiFiClientSocketHandle(sockfd));
+    _rxBuffer.reset(new WiFiClientRxBuffer(sockfd));
     _connected = true;
     return 1;
 }
 
 int WiFiClient::connect(const char *host, uint16_t port)
 {
-    struct hostent *server;
-    server = gethostbyname(host);
-    if (server == NULL) {
+    IPAddress srv((uint32_t)0);
+    if(!WiFiGenericClass::hostByName(host, srv)){
         return 0;
     }
-    IPAddress srv((const uint8_t *)(server->h_addr));
     return connect(srv, port);
 }
 
@@ -118,7 +233,7 @@ int WiFiClient::setSocketOption(int option, char* value, size_t len)
 {
     int res = setsockopt(fd(), SOL_SOCKET, option, value, len);
     if(res < 0) {
-        log_e("%d", errno);
+        log_e("%X : %d", option, errno);
     }
     return res;
 }
@@ -186,6 +301,8 @@ size_t WiFiClient::write(const uint8_t *buf, size_t size)
     int res =0;
     int retry = WIFI_CLIENT_MAX_WRITE_RETRY;
     int socketFileDescriptor = fd();
+    size_t totalBytesSent = 0;
+    size_t bytesRemaining = size;
 
     if(!_connected || (socketFileDescriptor < 0)) {
         return 0;
@@ -206,8 +323,18 @@ size_t WiFiClient::write(const uint8_t *buf, size_t size)
         }
 
         if(FD_ISSET(socketFileDescriptor, &set)) {
-            res = send(socketFileDescriptor, (void*) buf, size, MSG_DONTWAIT);
-            if(res < 0) {
+            res = send(socketFileDescriptor, (void*) buf, bytesRemaining, MSG_DONTWAIT);
+            if(res > 0) {
+                totalBytesSent += res;
+                if (totalBytesSent >= size) {
+                    //completed successfully
+                    retry = 0;
+                } else {
+                    buf += res;
+                    bytesRemaining -= res;
+                }
+            }
+            else if(res < 0) {
                 log_e("%d", errno);
                 if(errno != EAGAIN) {
                     //if resource was busy, can try again, otherwise give up
@@ -215,22 +342,53 @@ size_t WiFiClient::write(const uint8_t *buf, size_t size)
                     res = 0;
                     retry = 0;
                 }
-            } else {
-                //completed successfully
-                retry = 0;
+            }
+            else {
+                // Try again
             }
         }
     }
-    return res;
+    return totalBytesSent;
+}
+
+size_t WiFiClient::write_P(PGM_P buf, size_t size)
+{
+    return write(buf, size);
+}
+
+size_t WiFiClient::write(Stream &stream)
+{
+    uint8_t * buf = (uint8_t *)malloc(1360);
+    if(!buf){
+        return 0;
+    }
+    size_t toRead = 0, toWrite = 0, written = 0;
+    size_t available = stream.available();
+    while(available){
+        toRead = (available > 1360)?1360:available;
+        toWrite = stream.readBytes(buf, toRead);
+        written += write(buf, toWrite);
+        available = stream.available();
+    }
+    free(buf);
+    return written;
 }
 
 int WiFiClient::read(uint8_t *buf, size_t size)
 {
-    if(!available()) {
-        return -1;
+    int res = -1;
+    res = _rxBuffer->read(buf, size);
+    if(_rxBuffer->failed()) {
+        log_e("%d", errno);
+        stop();
     }
-    int res = recv(fd(), buf, size, MSG_DONTWAIT);
-    if(res < 0 && errno != EWOULDBLOCK) {
+    return res;
+}
+
+int WiFiClient::peek()
+{
+    int res = _rxBuffer->peek();
+    if(_rxBuffer->failed()) {
         log_e("%d", errno);
         stop();
     }
@@ -242,14 +400,12 @@ int WiFiClient::available()
     if(!_connected) {
         return 0;
     }
-    int count;
-    int res = ioctl(fd(), FIONREAD, &count);
-    if(res < 0) {
+    int res = _rxBuffer->available();
+    if(_rxBuffer->failed()) {
         log_e("%d", errno);
         stop();
-        return 0;
     }
-    return count;
+    return res;
 }
 
 // Though flushing means to send all pending data,
@@ -279,8 +435,28 @@ void WiFiClient::flush() {
 
 uint8_t WiFiClient::connected()
 {
-    uint8_t dummy = 0;
-    read(&dummy, 0);
+    if (_connected) {
+        uint8_t dummy;
+        int res = recv(fd(), &dummy, 0, MSG_DONTWAIT);
+        switch (errno) {
+            case EWOULDBLOCK:
+            case ENOENT: //caused by vfs
+                _connected = true;
+                break;
+            case ENOTCONN:
+            case EPIPE:
+            case ECONNRESET:
+            case ECONNREFUSED:
+            case ECONNABORTED:
+                _connected = false;
+                log_d("Disconnected: RES: %d, ERR: %d", res, errno);
+                break;
+            default:
+                log_i("Unexpected: RES: %d, ERR: %d", res, errno);
+                _connected = true;
+                break;
+        }
+    }
     return _connected;
 }
 
@@ -310,6 +486,34 @@ IPAddress WiFiClient::remoteIP() const
 uint16_t WiFiClient::remotePort() const
 {
     return remotePort(fd());
+}
+
+IPAddress WiFiClient::localIP(int fd) const
+{
+    struct sockaddr_storage addr;
+    socklen_t len = sizeof addr;
+    getsockname(fd, (struct sockaddr*)&addr, &len);
+    struct sockaddr_in *s = (struct sockaddr_in *)&addr;
+    return IPAddress((uint32_t)(s->sin_addr.s_addr));
+}
+
+uint16_t WiFiClient::localPort(int fd) const
+{
+    struct sockaddr_storage addr;
+    socklen_t len = sizeof addr;
+    getsockname(fd, (struct sockaddr*)&addr, &len);
+    struct sockaddr_in *s = (struct sockaddr_in *)&addr;
+    return ntohs(s->sin_port);
+}
+
+IPAddress WiFiClient::localIP() const
+{
+    return localIP(fd());
+}
+
+uint16_t WiFiClient::localPort() const
+{
+    return localPort(fd());
 }
 
 bool WiFiClient::operator==(const WiFiClient& rhs)

@@ -16,6 +16,11 @@
 */
 #include "sdkconfig.h"
 
+/* If BT is not built at all */
+#ifndef CONFIG_BT_RESERVE_DRAM
+#define CONFIG_BT_RESERVE_DRAM 0
+#endif
+
 MEMORY
 {
   /* All these values assume the flash cache is on, and have the blocks this uses subtracted from the length
@@ -25,19 +30,33 @@ MEMORY
   /* IRAM for PRO cpu. Not sure if happy with this, this is MMU area... */
   iram0_0_seg (RX) :                 org = 0x40080000, len = 0x20000
 
-  /* Even though the segment name is iram, it is actually mapped to flash */
-  iram0_2_seg (RX) :                 org = 0x400D0018, len = 0x330000
+  /* Even though the segment name is iram, it is actually mapped to flash
+  */
+  iram0_2_seg (RX) :                 org = 0x400D0018, len = 0x330000-0x18
+
+  /*
+    (0x18 offset above is a convenience for the app binary image generation. Flash cache has 64KB pages. The .bin file
+    which is flashed to the chip has a 0x18 byte file header. Setting this offset makes it simple to meet the flash
+    cache MMU's constraint that (paddr % 64KB == vaddr % 64KB).)
+  */
+
 
   /* Shared data RAM, excluding memory reserved for ROM bss/data/stack.
 
      Enabling Bluetooth & Trace Memory features in menuconfig will decrease
      the amount of RAM available.
+
+     Note: Length of this section *should* be 0x50000, and this extra DRAM is available
+     in heap at runtime. However due to static ROM memory usage at this 176KB mark, the
+     additional static memory temporarily cannot be used.
   */
   dram0_0_seg (RW) :                 org = 0x3FFB0000 + CONFIG_BT_RESERVE_DRAM,
-                                     len = 0x50000 - CONFIG_TRACEMEM_RESERVE_DRAM - CONFIG_BT_RESERVE_DRAM
+                                     len = 0x2c200 - CONFIG_BT_RESERVE_DRAM
 
   /* Flash mapped constant data */
-  drom0_0_seg (R) :                  org = 0x3F400010, len = 0x800000
+  drom0_0_seg (R) :                  org = 0x3F400018, len = 0x400000-0x18
+
+  /* (See iram0_2_seg for meaning of 0x18 offset in the above.) */
 
   /* RTC fast memory (executable). Persists over deep sleep.
    */

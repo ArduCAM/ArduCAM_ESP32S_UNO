@@ -37,13 +37,13 @@ extern "C" {
  */
 
 //Keep the LEVELx values as they are here; they match up with (1<<level)
-#define ESP_INTR_FLAG_LEVEL1		(1<<1)	///< Accept a Level 1 interrupt vector
+#define ESP_INTR_FLAG_LEVEL1		(1<<1)	///< Accept a Level 1 interrupt vector (lowest priority)
 #define ESP_INTR_FLAG_LEVEL2		(1<<2)	///< Accept a Level 2 interrupt vector
 #define ESP_INTR_FLAG_LEVEL3		(1<<3)	///< Accept a Level 3 interrupt vector
 #define ESP_INTR_FLAG_LEVEL4		(1<<4)	///< Accept a Level 4 interrupt vector
 #define ESP_INTR_FLAG_LEVEL5		(1<<5)	///< Accept a Level 5 interrupt vector
 #define ESP_INTR_FLAG_LEVEL6		(1<<6)	///< Accept a Level 6 interrupt vector
-#define ESP_INTR_FLAG_NMI			(1<<7)	///< Accept a Level 7 interrupt vector
+#define ESP_INTR_FLAG_NMI			(1<<7)	///< Accept a Level 7 interrupt vector (highest priority)
 #define ESP_INTR_FLAG_SHARED		(1<<8)	///< Interrupt can be shared between ISRs
 #define ESP_INTR_FLAG_EDGE			(1<<9)	///< Edge-triggered interrupt
 #define ESP_INTR_FLAG_IRAM			(1<<10)	///< ISR can be called if cache is disabled
@@ -77,6 +77,9 @@ extern "C" {
 
 /**@}*/
 
+// This is used to provide SystemView with positive IRQ IDs, otherwise sheduler events are not shown properly
+#define ETS_INTERNAL_INTR_SOURCE_OFF		(-ETS_INTERNAL_PROFILING_INTR_SOURCE)
+
 typedef void (*intr_handler_t)(void *arg); 
 
 
@@ -101,7 +104,7 @@ typedef intr_handle_data_t* intr_handle_t ;
 esp_err_t esp_intr_mark_shared(int intno, int cpu, bool is_in_iram);
 
 /**
- * @brief Reserve an interrupt to be used outside of this framewoek
+ * @brief Reserve an interrupt to be used outside of this framework
  * 
  * This will mark a certain interrupt on the specified CPU as
  * reserved, not to be allocated for any reason.
@@ -194,6 +197,11 @@ esp_err_t esp_intr_alloc_intrstatus(int source, int flags, uint32_t intrstatusre
  * Use an interrupt handle to disable the interrupt and release the resources
  * associated with it.
  *
+ * @note 
+ * When the handler shares its source with other handlers, the interrupt status 
+ * bits it's responsible for should be managed properly before freeing it. see 
+ * ``esp_intr_disable`` for more details.
+ *
  * @param handle The handle, as obtained by esp_intr_alloc or esp_intr_alloc_intrstatus
  *
  * @return ESP_ERR_INVALID_ARG if handle is invalid, or esp_intr_free runs on another core than
@@ -221,12 +229,16 @@ int esp_intr_get_cpu(intr_handle_t handle);
  */
 int esp_intr_get_intno(intr_handle_t handle);
 
-
 /**
  * @brief Disable the interrupt associated with the handle
  * 
- * @note For local interrupts (ESP_INTERNAL_* sources), this function has to be called on the
- *       CPU the interrupt is allocated on. Other interrupts have no such restriction.
+ * @note 
+ * 1. For local interrupts (ESP_INTERNAL_* sources), this function has to be called on the
+ * CPU the interrupt is allocated on. Other interrupts have no such restriction.
+ * 2. When several handlers sharing a same interrupt source, interrupt status bits, which are 
+ * handled in the handler to be disabled, should be masked before the disabling, or handled
+ * in other enabled interrupts properly. Miss of interrupt status handling will cause infinite 
+ * interrupt calls and finally system crash.
  *
  * @param handle The handle, as obtained by esp_intr_alloc or esp_intr_alloc_intrstatus
  *
@@ -236,8 +248,8 @@ int esp_intr_get_intno(intr_handle_t handle);
 esp_err_t esp_intr_disable(intr_handle_t handle);
 
 /**
- * @brief Ensable the interrupt associated with the handle
- * 
+ * @brief Enable the interrupt associated with the handle
+ *
  * @note For local interrupts (ESP_INTERNAL_* sources), this function has to be called on the
  *       CPU the interrupt is allocated on. Other interrupts have no such restriction.
  *
@@ -248,6 +260,19 @@ esp_err_t esp_intr_disable(intr_handle_t handle);
  */
 esp_err_t esp_intr_enable(intr_handle_t handle);
 
+/**
+ * @brief Set the "in IRAM" status of the handler.
+ *
+ * @note Does not work on shared interrupts.
+ *
+ * @param handle The handle, as obtained by esp_intr_alloc or esp_intr_alloc_intrstatus
+ * @param is_in_iram Whether the handler associated with this handle resides in IRAM.
+ *                   Handlers residing in IRAM can be called when cache is disabled.
+ *
+ * @return ESP_ERR_INVALID_ARG if the combination of arguments is invalid.
+ *         ESP_OK otherwise
+ */
+esp_err_t esp_intr_set_in_iram(intr_handle_t handle, bool is_in_iram);
 
 /**
  * @brief Disable interrupts that aren't specifically marked as running from IRAM
