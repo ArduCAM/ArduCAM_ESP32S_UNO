@@ -2,10 +2,11 @@
 ArduCAM ESP32 Series Development Boards
 - Add ArduCAM ESP32 SPIFFS test demo
 - Tested on 32 and 64 bit Windows 7/ Windows 10 machines
-## Download ArduCAM_ESP32S_UNO board support file 
-Please use the below josn board manager script to download ESP32S UNO board support files
+## Download ArduCAM_ESP32S_UNO board
+- Copy the http://www.arducam.com/downloads/ESP32_UNO/package_ArduCAM_ESP32S_UNO_index.json to Additional Boards Manager URLs
 
-  http://www.arducam.com/downloads/ESP32_UNO/package_ArduCAM_ESP32S_UNO_index.json
+
+  
   
   
 ## ArduCAM ESP32 UNO MINI Camera Demo Tutorial
