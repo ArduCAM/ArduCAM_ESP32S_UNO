@@ -2,6 +2,8 @@
 ## ArduCAM ESP32 Series Development Boards
 - Add ArduCAM ESP32 SPIFFS test demo
 - Tested on 32 and 64 bit Windows 7/ Windows 10 machines
+##  Arduino ESP32 filesystem uploader
+- Referring https://github.com/ArduCAM/ArduCAM_ESP32S_UNO/blob/master/doc/ESP32_filesystem.md
 ## Download ArduCAM_ESP32S_UNO board
 - Copy the http://www.arducam.com/downloads/ESP32_UNO/package_ArduCAM_ESP32S_UNO_index.json to Additional Boards Manager URLs
   Then search the ArduCAM ESP32S UNO baord
